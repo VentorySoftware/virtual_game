@@ -314,7 +314,7 @@ const Catalog = () => {
               : "grid-cols-1 gap-4"
           }`}>
             {filteredAndSortedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} showAddToCart={true} />
             ))}
           </div>
         ) : (

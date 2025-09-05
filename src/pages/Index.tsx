@@ -1,8 +1,9 @@
-import HeroSection from "@/components/sections/HeroSection"
-import CategoriesSection from "@/components/sections/CategoriesSection"
-import FeaturedProducts from "@/components/sections/FeaturedProducts"
 import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
+import WhatsAppWidget from "@/components/widgets/WhatsAppWidget"
+import HeroSection from "@/components/sections/HeroSection"
+import FeaturedProducts from "@/components/sections/FeaturedProducts"
+import CategoriesSection from "@/components/sections/CategoriesSection"
 
 const Index = () => {
   return (
@@ -14,6 +15,7 @@ const Index = () => {
         <CategoriesSection />
       </main>
       <Footer />
+      <WhatsAppWidget />
     </div>
   );
 };
