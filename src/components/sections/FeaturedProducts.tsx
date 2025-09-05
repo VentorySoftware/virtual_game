@@ -1,0 +1,184 @@
+import { Badge } from "@/components/ui/badge"
+import { CyberButton } from "@/components/ui/cyber-button"
+import ProductCard from "@/components/products/ProductCard"
+import { ArrowRight, Flame, Clock, Package } from "lucide-react"
+
+// Mock data - En producción vendría de Supabase
+const mockProducts = [
+  {
+    id: "1",
+    title: "Cyberpunk 2077: Phantom Liberty",
+    platform: "PC/PS5/Xbox",
+    originalPrice: 25999,
+    price: 15999,
+    rating: 4.8,
+    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=300&fit=crop",
+    isPreOrder: false
+  },
+  {
+    id: "2", 
+    title: "Spider-Man 2",
+    platform: "PS5",
+    originalPrice: 32999,
+    price: 29999,
+    rating: 4.9,
+    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
+    isPreOrder: true,
+    releaseDate: "20 Oct 2024"
+  },
+  {
+    id: "3",
+    title: "Starfield",
+    platform: "PC/Xbox",
+    originalPrice: 28999,
+    price: 22999,
+    rating: 4.5,
+    image: "https://images.unsplash.com/photo-1614728263952-84ea256f9679?w=400&h=300&fit=crop"
+  },
+  {
+    id: "4",
+    title: "The Legend of Zelda: TOTK",
+    platform: "Nintendo Switch",
+    originalPrice: 35999,
+    price: 33999,
+    rating: 4.9,
+    image: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=400&h=300&fit=crop"
+  },
+  {
+    id: "5",
+    title: "Call of Duty: MW III",
+    platform: "Multi",
+    originalPrice: 38999,
+    price: 34999,
+    rating: 4.3,
+    image: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=300&fit=crop"
+  },
+  {
+    id: "6",
+    title: "FIFA 24",
+    platform: "Multi",
+    originalPrice: 32999,
+    price: 27999,
+    rating: 4.2,
+    image: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400&h=300&fit=crop"
+  }
+]
+
+const preOrderProducts = mockProducts.filter(p => p.isPreOrder)
+const featuredProducts = mockProducts.filter(p => !p.isPreOrder).slice(0, 4)
+
+const FeaturedProducts = () => {
+  return (
+    <div className="space-y-20">
+      {/* Pre-orders Section */}
+      {preOrderProducts.length > 0 && (
+        <section className="py-16">
+          <div className="container">
+            <div className="flex items-center justify-between mb-12">
+              <div className="space-y-4">
+                <Badge variant="outline" className="border-accent text-accent bg-accent/10 animate-pulse">
+                  <Clock className="w-4 h-4 mr-2" />
+                  Pre-órdenes Disponibles
+                </Badge>
+                <h2 className="text-3xl md:text-4xl font-bold font-orbitron">
+                  <span className="neon-text">Próximos</span>{" "}
+                  <span className="text-accent">Lanzamientos</span>
+                </h2>
+                <p className="text-muted-foreground max-w-2xl">
+                  Asegura tu copia de los juegos más esperados. Pre-ordena ahora y recibe beneficios exclusivos.
+                </p>
+              </div>
+              
+              <CyberButton variant="neon">
+                Ver Todos
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </CyberButton>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {preOrderProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Featured Games Section */}
+      <section className="py-16 relative">
+        {/* Background glow */}
+        <div className="absolute inset-0 bg-gradient-glow opacity-10 blur-3xl" />
+        
+        <div className="container relative">
+          <div className="flex items-center justify-between mb-12">
+            <div className="space-y-4">
+              <Badge variant="outline" className="border-primary text-primary bg-primary/10">
+                <Flame className="w-4 h-4 mr-2 animate-pulse" />
+                Más Populares
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold font-orbitron">
+                <span className="neon-text">Juegos</span>{" "}
+                <span className="text-primary">Destacados</span>
+              </h2>
+              <p className="text-muted-foreground max-w-2xl">
+                Los títulos más vendidos y mejor valorados por nuestra comunidad. 
+                Descubre por qué son los favoritos de los gamers.
+              </p>
+            </div>
+            
+            <CyberButton variant="cyber">
+              Ver Catálogo Completo
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </CyberButton>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+            {featuredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+
+          {/* Call to Action */}
+          <div className="cyber-card p-8 text-center space-y-6 bg-gradient-cyber">
+            <div className="space-y-4">
+              <Badge className="bg-white/20 text-white border-white/30">
+                <Package className="w-4 h-4 mr-2" />
+                Packs Exclusivos
+              </Badge>
+              <h3 className="text-2xl font-bold font-orbitron text-white">
+                Combos y Packs Especiales
+              </h3>
+              <p className="text-white/80 max-w-lg mx-auto">
+                Ahorra más comprando nuestros packs especiales. 
+                Múltiples juegos al mejor precio combinado.
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <CyberButton 
+                variant="outline" 
+                className="bg-white/10 border-white/30 text-white hover:bg-white hover:text-black"
+              >
+                Ver Packs PS5
+              </CyberButton>
+              <CyberButton 
+                variant="outline"
+                className="bg-white/10 border-white/30 text-white hover:bg-white hover:text-black"
+              >
+                Ver Packs Xbox
+              </CyberButton>
+              <CyberButton 
+                variant="outline"
+                className="bg-white/10 border-white/30 text-white hover:bg-white hover:text-black"
+              >
+                Ver Packs PC
+              </CyberButton>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+export default FeaturedProducts
