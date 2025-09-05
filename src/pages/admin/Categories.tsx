@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Navigate } from "react-router-dom"
-import { Plus, Search, Edit, Trash2, FolderTree, Tag } from "lucide-react"
+import { Plus, Search, Edit, Trash2, FolderTree, Tag, Image as ImageIcon } from "lucide-react"
 import AdminLayout from "@/components/admin/AdminLayout"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Input } from "@/components/ui/input"
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
+import { ImageUploadCrop } from "@/components/admin/ImageUploadCrop"
 
 interface Category {
   id: string
@@ -37,6 +38,7 @@ const CategoriesAdmin = () => {
     image_url: '',
     sort_order: '0'
   })
+  const [showImageEditor, setShowImageEditor] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -169,6 +171,7 @@ const CategoriesAdmin = () => {
       image_url: '',
       sort_order: '0'
     })
+    setShowImageEditor(false)
   }
 
   const startEditing = (category: Category) => {
@@ -225,8 +228,22 @@ const CategoriesAdmin = () => {
           </CyberButton>
         </div>
 
+        {/* Image Editor Modal */}
+        {showImageEditor && (
+          <ImageUploadCrop
+            onImageSave={(imageUrl) => {
+              setNewCategory({...newCategory, image_url: imageUrl})
+              setShowImageEditor(false)
+            }}
+            onCancel={() => setShowImageEditor(false)}
+            initialImage={newCategory.image_url}
+            bucketName="products"
+            folder="categories"
+          />
+        )}
+
         {/* Create/Edit Category Modal */}
-        {showCreateCategory && (
+        {showCreateCategory && !showImageEditor && (
           <Card className="cyber-card">
             <CardHeader>
               <CardTitle>
@@ -271,14 +288,43 @@ const CategoriesAdmin = () => {
               </div>
 
               <div>
-                <Label htmlFor="image_url">URL de Imagen</Label>
-                <Input
-                  id="image_url"
-                  value={newCategory.image_url}
-                  onChange={(e) => setNewCategory({...newCategory, image_url: e.target.value})}
-                  className="cyber-border"
-                  placeholder="https://example.com/imagen.jpg"
-                />
+                <Label>Imagen de Categoría</Label>
+                <div className="space-y-3">
+                  {newCategory.image_url && !showImageEditor && (
+                    <div className="flex items-center gap-3 p-3 border border-border rounded-lg">
+                      <img 
+                        src={newCategory.image_url} 
+                        alt="Vista previa" 
+                        className="w-16 h-16 object-cover rounded-lg"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Imagen seleccionada</p>
+                        <p className="text-xs text-muted-foreground">
+                          {newCategory.image_url.split('/').pop()}
+                        </p>
+                      </div>
+                      <CyberButton 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowImageEditor(true)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Editar
+                      </CyberButton>
+                    </div>
+                  )}
+                  
+                  {!newCategory.image_url && !showImageEditor && (
+                    <CyberButton 
+                      variant="outline" 
+                      onClick={() => setShowImageEditor(true)}
+                      className="w-full justify-center"
+                    >
+                      <ImageIcon className="h-4 w-4 mr-2" />
+                      Subir Imagen
+                    </CyberButton>
+                  )}
+                </div>
               </div>
 
               <div className="flex gap-2">
