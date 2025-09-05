@@ -4,8 +4,11 @@ import { Plus, Search, Edit, Trash2, Eye, Package } from "lucide-react"
 import AdminLayout from "@/components/admin/AdminLayout"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import type { Product } from "@/types/database"
@@ -21,6 +24,23 @@ const ProductsAdmin = () => {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
+  const [showCreateProduct, setShowCreateProduct] = useState(false)
+  const [categories, setCategories] = useState<any[]>([])
+  const [platforms, setPlatforms] = useState<any[]>([])
+  const [newProduct, setNewProduct] = useState({
+    title: '',
+    description: '',
+    short_description: '',
+    price: '',
+    original_price: '',
+    sku: '',
+    image_url: '',
+    category_id: '',
+    platform_id: '',
+    stock_quantity: '0',
+    type: 'digital' as 'digital' | 'physical' | 'preorder',
+    is_featured: false
+  })
 
   useEffect(() => {
     if (user) {
@@ -39,7 +59,11 @@ const ProductsAdmin = () => {
       setIsAdmin(data)
       
       if (data) {
-        await fetchProducts()
+        await Promise.all([
+          fetchProducts(),
+          fetchCategories(),
+          fetchPlatforms()
+        ])
       }
     } catch (error) {
       console.error('Error checking admin status:', error)
@@ -64,6 +88,92 @@ const ProductsAdmin = () => {
       setProducts(data || [])
     } catch (error) {
       console.error('Error fetching products:', error)
+    }
+  }
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name')
+
+      if (error) throw error
+      setCategories(data || [])
+    } catch (error) {
+      console.error('Error fetching categories:', error)
+    }
+  }
+
+  const fetchPlatforms = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('platforms')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name')
+
+      if (error) throw error
+      setPlatforms(data || [])
+    } catch (error) {
+      console.error('Error fetching platforms:', error)
+    }
+  }
+
+  const createProduct = async () => {
+    try {
+      if (!newProduct.title || !newProduct.price) {
+        alert('Título y precio son obligatorios')
+        return
+      }
+
+      const slug = newProduct.title.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+
+      const { error } = await supabase
+        .from('products')
+        .insert({
+          title: newProduct.title,
+          slug: slug,
+          description: newProduct.description,
+          short_description: newProduct.short_description,
+          price: parseFloat(newProduct.price),
+          original_price: newProduct.original_price ? parseFloat(newProduct.original_price) : null,
+          sku: newProduct.sku,
+          image_url: newProduct.image_url,
+          category_id: newProduct.category_id || null,
+          platform_id: newProduct.platform_id || null,
+          stock_quantity: parseInt(newProduct.stock_quantity) || 0,
+          type: newProduct.type,
+          is_featured: newProduct.is_featured,
+          is_active: true
+        })
+
+      if (error) throw error
+
+      setShowCreateProduct(false)
+      setNewProduct({
+        title: '',
+        description: '',
+        short_description: '',
+        price: '',
+        original_price: '',
+        sku: '',
+        image_url: '',
+        category_id: '',
+        platform_id: '',
+        stock_quantity: '0',
+        type: 'digital',
+        is_featured: false
+      })
+      
+      await fetchProducts()
+      alert('Producto creado exitosamente')
+    } catch (error: any) {
+      console.error('Error creating product:', error)
+      alert(`Error al crear producto: ${error.message}`)
     }
   }
 
@@ -121,8 +231,214 @@ const ProductsAdmin = () => {
             <p className="text-muted-foreground">
               Administra el catálogo de productos
             </p>
-          </div>
-          <CyberButton className="flex items-center gap-2">
+        </div>
+
+        {/* Create Product Modal */}
+        {showCreateProduct && (
+          <Card className="cyber-card">
+            <CardHeader>
+              <CardTitle>Crear Nuevo Producto</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="title">Título *</Label>
+                  <Input
+                    id="title"
+                    value={newProduct.title}
+                    onChange={(e) => setNewProduct({...newProduct, title: e.target.value})}
+                    className="cyber-border"
+                    placeholder="Nombre del producto"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="sku">SKU</Label>
+                  <Input
+                    id="sku"
+                    value={newProduct.sku}
+                    onChange={(e) => setNewProduct({...newProduct, sku: e.target.value})}
+                    className="cyber-border"
+                    placeholder="Código único"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="short_description">Descripción Corta</Label>
+                <Textarea
+                  id="short_description"
+                  value={newProduct.short_description}
+                  onChange={(e) => setNewProduct({...newProduct, short_description: e.target.value})}
+                  className="cyber-border"
+                  placeholder="Descripción breve del producto"
+                  rows={2}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="description">Descripción</Label>
+                <Textarea
+                  id="description"
+                  value={newProduct.description}
+                  onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                  className="cyber-border"
+                  placeholder="Descripción detallada del producto"
+                  rows={4}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="price">Precio *</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    step="0.01"
+                    value={newProduct.price}
+                    onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                    className="cyber-border"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="original_price">Precio Original</Label>
+                  <Input
+                    id="original_price"
+                    type="number"
+                    step="0.01"
+                    value={newProduct.original_price}
+                    onChange={(e) => setNewProduct({...newProduct, original_price: e.target.value})}
+                    className="cyber-border"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="stock">Stock</Label>
+                  <Input
+                    id="stock"
+                    type="number"
+                    value={newProduct.stock_quantity}
+                    onChange={(e) => setNewProduct({...newProduct, stock_quantity: e.target.value})}
+                    className="cyber-border"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="category">Categoría</Label>
+                  <Select 
+                    value={newProduct.category_id} 
+                    onValueChange={(value) => setNewProduct({...newProduct, category_id: value})}
+                  >
+                    <SelectTrigger className="cyber-border">
+                      <SelectValue placeholder="Seleccionar categoría" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="platform">Plataforma</Label>
+                  <Select 
+                    value={newProduct.platform_id} 
+                    onValueChange={(value) => setNewProduct({...newProduct, platform_id: value})}
+                  >
+                    <SelectTrigger className="cyber-border">
+                      <SelectValue placeholder="Seleccionar plataforma" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {platforms.map((platform) => (
+                        <SelectItem key={platform.id} value={platform.id}>
+                          {platform.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="type">Tipo</Label>
+                  <Select 
+                    value={newProduct.type} 
+                    onValueChange={(value) => setNewProduct({...newProduct, type: value as any})}
+                  >
+                    <SelectTrigger className="cyber-border">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="digital">Digital</SelectItem>
+                      <SelectItem value="physical">Físico</SelectItem>
+                      <SelectItem value="preorder">Pre-orden</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="image_url">URL de Imagen</Label>
+                <Input
+                  id="image_url"
+                  value={newProduct.image_url}
+                  onChange={(e) => setNewProduct({...newProduct, image_url: e.target.value})}
+                  className="cyber-border"
+                  placeholder="https://example.com/imagen.jpg"
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="is_featured"
+                  checked={newProduct.is_featured}
+                  onChange={(e) => setNewProduct({...newProduct, is_featured: e.target.checked})}
+                  className="rounded"
+                />
+                <Label htmlFor="is_featured">Producto destacado</Label>
+              </div>
+
+              <div className="flex gap-2">
+                <CyberButton 
+                  onClick={createProduct} 
+                  disabled={!newProduct.title || !newProduct.price}
+                >
+                  Crear Producto
+                </CyberButton>
+                <CyberButton 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowCreateProduct(false)
+                    setNewProduct({
+                      title: '',
+                      description: '',
+                      short_description: '',
+                      price: '',
+                      original_price: '',
+                      sku: '',
+                      image_url: '',
+                      category_id: '',
+                      platform_id: '',
+                      stock_quantity: '0',
+                      type: 'digital',
+                      is_featured: false
+                    })
+                  }}
+                >
+                  Cancelar
+                </CyberButton>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+          <CyberButton 
+            className="flex items-center gap-2"
+            onClick={() => setShowCreateProduct(true)}
+          >
             <Plus className="h-4 w-4" />
             Nuevo Producto
           </CyberButton>
