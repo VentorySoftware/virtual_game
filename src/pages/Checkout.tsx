@@ -25,7 +25,7 @@ interface CheckoutFormData {
   notes: string
 }
 
-type PaymentMethod = 'bank_transfer' | 'mercado_pago'
+type PaymentMethod = 'bank_transfer' | 'mercadopago'
 
 const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart()
@@ -72,7 +72,7 @@ const Checkout = () => {
       order_number: `VG${Date.now()}`,
       subtotal: totalPrice,
       total: totalPrice,
-      status: 'pending' as const,
+      status: 'verifying' as const,
       billing_info: {
         email: formData.email,
         firstName: formData.firstName,
@@ -193,7 +193,7 @@ const Checkout = () => {
 
       if (paymentMethod === 'bank_transfer') {
         await handleBankTransfer(order)
-      } else if (paymentMethod === 'mercado_pago') {
+      } else if (paymentMethod === 'mercadopago') {
         await handleMercadoPago(order)
       }
       
@@ -357,8 +357,8 @@ const Checkout = () => {
                     </div>
                     
                     <div className="flex items-center space-x-2 p-3 border border-primary/10 rounded-lg hover:bg-card/20 cursor-pointer">
-                      <RadioGroupItem value="mercado_pago" id="mercado_pago" />
-                      <Label htmlFor="mercado_pago" className="flex items-center gap-2 cursor-pointer flex-1">
+                      <RadioGroupItem value="mercadopago" id="mercadopago" />
+                      <Label htmlFor="mercadopago" className="flex items-center gap-2 cursor-pointer flex-1">
                         <CreditCard className="h-4 w-4 text-blue-500" />
                         <div>
                           <div className="font-medium">MercadoPago</div>
