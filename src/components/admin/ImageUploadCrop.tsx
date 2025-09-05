@@ -23,74 +23,93 @@ export const ImageUploadCrop = ({
   folder = "categories"
 }: ImageUploadCropProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const fabricCanvasRef = useRef<FabricCanvas | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const isDisposingRef = useRef(false)
 
-  // Cleanup effect for canvas disposal
-  useEffect(() => {
-    return () => {
-      if (fabricCanvas) {
-        try {
-          fabricCanvas.dispose()
-        } catch (error) {
-          console.warn('Canvas disposal error:', error)
-        }
+  // Safe canvas disposal
+  const disposeCanvas = useCallback(() => {
+    if (isDisposingRef.current) return
+    isDisposingRef.current = true
+    
+    if (fabricCanvasRef.current) {
+      try {
+        const canvas = fabricCanvasRef.current
+        fabricCanvasRef.current = null
+        
+        // Clear all objects first
+        canvas.clear()
+        
+        // Then dispose
+        canvas.dispose()
+      } catch (error) {
+        console.warn('Canvas disposal warning:', error)
       }
     }
-  }, [fabricCanvas])
+    
+    setTimeout(() => {
+      isDisposingRef.current = false
+    }, 100)
+  }, [])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      disposeCanvas()
+    }
+  }, [disposeCanvas])
 
   const initializeCanvas = useCallback((imageElement: HTMLImageElement) => {
     if (!canvasRef.current) return
 
-    // Dispose existing canvas safely
-    if (fabricCanvas) {
-      try {
-        fabricCanvas.dispose()
-      } catch (error) {
-        console.warn('Canvas disposal error:', error)
-      }
-    }
+    // Dispose existing canvas first
+    disposeCanvas()
 
-    const canvas = new FabricCanvas(canvasRef.current, {
-      width: 400,
-      height: 300,
-      backgroundColor: "#ffffff",
-    })
-
-    // Create fabric image and add to canvas
-    FabricImage.fromURL(imageElement.src).then((fabricImg) => {
-      // Check if canvas still exists before proceeding
-      if (!canvas || canvas.disposed) return
+    // Small delay to ensure cleanup is complete
+    setTimeout(() => {
+      if (!canvasRef.current) return
       
-      // Scale image to fit canvas while maintaining aspect ratio
-      const canvasWidth = canvas.getWidth()
-      const canvasHeight = canvas.getHeight()
-      const imgWidth = fabricImg.width || 1
-      const imgHeight = fabricImg.height || 1
-      
-      const scaleX = canvasWidth / imgWidth
-      const scaleY = canvasHeight / imgHeight
-      const scale = Math.min(scaleX, scaleY)
-      
-      fabricImg.scale(scale)
-      
-      // Center the image manually
-      fabricImg.set({
-        left: (canvasWidth - fabricImg.getScaledWidth()) / 2,
-        top: (canvasHeight - fabricImg.getScaledHeight()) / 2
+      const canvas = new FabricCanvas(canvasRef.current, {
+        width: 400,
+        height: 300,
+        backgroundColor: "#ffffff",
       })
-      
-      canvas.add(fabricImg)
-      canvas.setActiveObject(fabricImg)
-      canvas.renderAll()
-    }).catch(error => {
-      console.warn('Image loading error:', error)
-    })
 
-    setFabricCanvas(canvas)
-  }, [])
+      fabricCanvasRef.current = canvas
+
+      // Create fabric image and add to canvas
+      FabricImage.fromURL(imageElement.src).then((fabricImg) => {
+        // Check if canvas still exists and hasn't been disposed
+        if (!fabricCanvasRef.current || isDisposingRef.current) return
+        
+        // Scale image to fit canvas while maintaining aspect ratio
+        const canvasWidth = canvas.getWidth()
+        const canvasHeight = canvas.getHeight()
+        const imgWidth = fabricImg.width || 1
+        const imgHeight = fabricImg.height || 1
+        
+        const scaleX = canvasWidth / imgWidth
+        const scaleY = canvasHeight / imgHeight
+        const scale = Math.min(scaleX, scaleY)
+        
+        fabricImg.scale(scale)
+        
+        // Center the image manually
+        fabricImg.set({
+          left: (canvasWidth - fabricImg.getScaledWidth()) / 2,
+          top: (canvasHeight - fabricImg.getScaledHeight()) / 2
+        })
+        
+        canvas.add(fabricImg)
+        canvas.setActiveObject(fabricImg)
+        canvas.renderAll()
+      }).catch(error => {
+        console.warn('Image loading error:', error)
+      })
+    }, 50)
+  }, [disposeCanvas])
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -113,42 +132,42 @@ export const ImageUploadCrop = ({
   }
 
   const handleRotate = () => {
-    if (!fabricCanvas || fabricCanvas.disposed) return
-    const activeObject = fabricCanvas.getActiveObject()
+    if (!fabricCanvasRef.current || isDisposingRef.current) return
+    const activeObject = fabricCanvasRef.current.getActiveObject()
     if (activeObject) {
       activeObject.rotate((activeObject.angle || 0) + 90)
-      fabricCanvas.renderAll()
+      fabricCanvasRef.current.renderAll()
     }
   }
 
   const handleZoomIn = () => {
-    if (!fabricCanvas || fabricCanvas.disposed) return
-    const activeObject = fabricCanvas.getActiveObject()
+    if (!fabricCanvasRef.current || isDisposingRef.current) return
+    const activeObject = fabricCanvasRef.current.getActiveObject()
     if (activeObject) {
       const currentScale = activeObject.scaleX || 1
       activeObject.scale(currentScale * 1.1)
-      fabricCanvas.renderAll()
+      fabricCanvasRef.current.renderAll()
     }
   }
 
   const handleZoomOut = () => {
-    if (!fabricCanvas || fabricCanvas.disposed) return
-    const activeObject = fabricCanvas.getActiveObject()
+    if (!fabricCanvasRef.current || isDisposingRef.current) return
+    const activeObject = fabricCanvasRef.current.getActiveObject()
     if (activeObject) {
       const currentScale = activeObject.scaleX || 1
       activeObject.scale(currentScale * 0.9)
-      fabricCanvas.renderAll()
+      fabricCanvasRef.current.renderAll()
     }
   }
 
   const handleSave = async () => {
-    if (!fabricCanvas || !selectedFile || fabricCanvas.disposed) return
+    if (!fabricCanvasRef.current || !selectedFile || isDisposingRef.current) return
 
     setIsLoading(true)
     
     try {
       // Export canvas as blob
-      const dataURL = fabricCanvas.toDataURL({
+      const dataURL = fabricCanvasRef.current.toDataURL({
         format: 'jpeg',
         quality: 0.8,
         multiplier: 2 // Higher resolution
@@ -188,12 +207,17 @@ export const ImageUploadCrop = ({
     }
   }
 
+  const handleCancel = () => {
+    disposeCanvas()
+    onCancel()
+  }
+
   return (
     <Card className="cyber-card">
       <CardContent className="p-6 space-y-4">
         <div className="flex items-center justify-between">
           <Label className="text-lg font-semibold">Editor de Imagen</Label>
-          <CyberButton variant="ghost" size="sm" onClick={onCancel}>
+          <CyberButton variant="ghost" size="sm" onClick={handleCancel}>
             <X className="h-4 w-4" />
           </CyberButton>
         </div>
