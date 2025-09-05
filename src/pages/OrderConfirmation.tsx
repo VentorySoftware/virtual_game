@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useParams, Navigate, Link, useSearchParams } from "react-router-dom"
-import { CheckCircle, Package, Mail, Phone, MapPin, Calendar, Download, RefreshCw } from "lucide-react"
+import { CheckCircle, Package, Mail, Phone, MapPin, Calendar, Download, RefreshCw, MessageCircle } from "lucide-react"
 import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
 import { CyberButton } from "@/components/ui/cyber-button"
@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
+import { useSiteSettings } from "@/hooks/useSiteSettings"
 
 interface Order {
   id: string
@@ -16,6 +17,7 @@ interface Order {
   total: number
   status: string
   payment_status: string
+  payment_method: string | null
   created_at: string
   billing_info: any
   customer_notes: string
@@ -32,8 +34,10 @@ const OrderConfirmation = () => {
   const { orderNumber } = useParams()
   const [searchParams] = useSearchParams()
   const sessionId = searchParams.get('session_id')
+  const paymentMethod = searchParams.get('payment_method')
   const { user } = useAuth()
   const { toast } = useToast()
+  const { settings } = useSiteSettings()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -126,6 +130,54 @@ const OrderConfirmation = () => {
     })
   }
 
+  const generateWhatsAppMessage = (order: Order) => {
+    let message = `🎮 *NUEVO PEDIDO - ${order.order_number}*\n\n`
+    message += `👤 *Cliente:* ${order.billing_info?.firstName || ''} ${order.billing_info?.lastName || ''}\n`
+    message += `📧 *Email:* ${order.billing_info?.email || user?.email}\n`
+    if (order.billing_info?.phone) message += `📱 *Teléfono:* ${order.billing_info.phone}\n`
+    if (order.billing_info?.address) {
+      message += `📍 *Dirección:* ${order.billing_info.address}`
+      if (order.billing_info.city) message += `, ${order.billing_info.city}`
+      if (order.billing_info.postalCode) message += ` ${order.billing_info.postalCode}`
+      message += `\n`
+    }
+    message += `\n🛒 *PRODUCTOS:*\n`
+    
+    order.order_items.forEach((item, index) => {
+      message += `${index + 1}. ${item.product_name}\n`
+      message += `   Cantidad: ${item.quantity}\n`
+      message += `   Precio unitario: ${formatPrice(Number(item.price))}\n`
+      message += `   Subtotal: ${formatPrice(Number(item.price) * item.quantity)}\n\n`
+    })
+    
+    message += `💰 *TOTAL: ${formatPrice(Number(order.total))}*\n\n`
+    message += `💳 *Método de pago:* Transferencia Bancaria\n`
+    message += `📋 *Estado:* Pendiente de confirmación de pago\n`
+    
+    if (order.customer_notes) {
+      message += `\n📝 *Notas del cliente:*\n${order.customer_notes}\n`
+    }
+    
+    message += `\n⚠️ *Acción requerida:* Validar transferencia y confirmar pedido`
+    
+    return message
+  }
+
+  const handleNotifyWhatsApp = () => {
+    if (!order) return
+    
+    const whatsappNumber = settings.whatsapp_number || "5411123456789"
+    const message = generateWhatsAppMessage(order)
+    const encodedMessage = encodeURIComponent(message)
+    
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, '_blank')
+    
+    toast({
+      title: "WhatsApp abierto",
+      description: "Se abrió WhatsApp con los detalles del pedido para notificar a la tienda.",
+    })
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-dark">
@@ -178,7 +230,7 @@ const OrderConfirmation = () => {
             </p>
             
             {/* Payment verification button */}
-            {order.status !== 'paid' && (
+            {order.status !== 'paid' && order.payment_method !== 'bank_transfer' && (
               <div className="mt-4">
                 <CyberButton 
                   onClick={handleVerifyPayment}
@@ -188,6 +240,23 @@ const OrderConfirmation = () => {
                 >
                   <RefreshCw className={`h-4 w-4 ${verifyingPayment ? 'animate-spin' : ''}`} />
                   {verifyingPayment ? 'Verificando...' : 'Verificar Pago'}
+                </CyberButton>
+              </div>
+            )}
+
+            {/* WhatsApp notification for bank transfer */}
+            {(order.payment_method === 'bank_transfer' || paymentMethod === 'bank_transfer') && order.status !== 'paid' && (
+              <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <h3 className="font-semibold text-blue-400 mb-2">Transferencia Bancaria</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Para procesar tu pedido, notifica a la tienda por WhatsApp con los detalles de la transferencia.
+                </p>
+                <CyberButton 
+                  onClick={handleNotifyWhatsApp}
+                  className="flex items-center gap-2 bg-green-500/20 border-green-500/30 text-green-400 hover:bg-green-500/30"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Notificar por WhatsApp
                 </CyberButton>
               </div>
             )}

@@ -143,19 +143,13 @@ const Checkout = () => {
   }
 
   const handleBankTransfer = async (order: any) => {
-    const whatsappNumber = settings.whatsapp_number || "5411123456789"
-    const message = generateWhatsAppMessage(order)
-    const encodedMessage = encodeURIComponent(message)
-    
-    window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, '_blank')
-    
     toast({
       title: "Pedido creado",
-      description: `Pedido ${order.order_number} creado. Se abrió WhatsApp para confirmar el pago.`,
+      description: `Pedido ${order.order_number} creado exitosamente.`,
     })
 
     await clearCart()
-    navigate(`/order-confirmation/${order.order_number}`)
+    navigate(`/order-confirmation/${order.order_number}?payment_method=bank_transfer`)
   }
 
   const handleMercadoPago = async (order: any) => {
