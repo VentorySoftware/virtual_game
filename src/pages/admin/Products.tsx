@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Navigate } from "react-router-dom"
-import { Plus, Search, Edit, Trash2, Eye, Package } from "lucide-react"
+import { Plus, Search, Edit, Trash2, Eye, Package, Image as ImageIcon } from "lucide-react"
 import AdminLayout from "@/components/admin/AdminLayout"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
+import { ImageUploadCrop } from "@/components/admin/ImageUploadCrop"
 import type { Product } from "@/types/database"
 
 interface ProductWithRelations extends Omit<Product, 'category' | 'platform'> {
@@ -28,6 +29,7 @@ const ProductsAdmin = () => {
   const [categories, setCategories] = useState<any[]>([])
   const [platforms, setPlatforms] = useState<any[]>([])
   const [editingProduct, setEditingProduct] = useState<ProductWithRelations | null>(null)
+  const [showImageEditor, setShowImageEditor] = useState(false)
   const [newProduct, setNewProduct] = useState({
     title: '',
     description: '',
@@ -262,6 +264,7 @@ const ProductsAdmin = () => {
       type: 'digital',
       is_featured: false
     })
+    setShowImageEditor(false)
   }
 
   const handleDeleteProduct = async (product: ProductWithRelations) => {
@@ -337,8 +340,22 @@ const ProductsAdmin = () => {
             </p>
         </div>
 
+        {/* Image Editor Modal */}
+        {showImageEditor && (
+          <ImageUploadCrop
+            onImageSave={(imageUrl) => {
+              setNewProduct({...newProduct, image_url: imageUrl})
+              setShowImageEditor(false)
+            }}
+            onCancel={() => setShowImageEditor(false)}
+            initialImage={newProduct.image_url}
+            bucketName="products"
+            folder="products"
+          />
+        )}
+
         {/* Create/Edit Product Modal */}
-        {showCreateProduct && (
+        {showCreateProduct && !showImageEditor && (
           <Card className="cyber-card">
             <CardHeader>
               <CardTitle>
@@ -487,14 +504,43 @@ const ProductsAdmin = () => {
               </div>
 
               <div>
-                <Label htmlFor="image_url">URL de Imagen</Label>
-                <Input
-                  id="image_url"
-                  value={newProduct.image_url}
-                  onChange={(e) => setNewProduct({...newProduct, image_url: e.target.value})}
-                  className="cyber-border"
-                  placeholder="https://example.com/imagen.jpg"
-                />
+                <Label>Imagen del Producto</Label>
+                <div className="space-y-3">
+                  {newProduct.image_url && !showImageEditor && (
+                    <div className="flex items-center gap-3 p-3 border border-border rounded-lg">
+                      <img 
+                        src={newProduct.image_url} 
+                        alt="Vista previa" 
+                        className="w-16 h-16 object-cover rounded-lg"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Imagen seleccionada</p>
+                        <p className="text-xs text-muted-foreground">
+                          {newProduct.image_url.split('/').pop()}
+                        </p>
+                      </div>
+                      <CyberButton 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowImageEditor(true)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Editar
+                      </CyberButton>
+                    </div>
+                  )}
+                  
+                  {!newProduct.image_url && !showImageEditor && (
+                    <CyberButton 
+                      variant="outline" 
+                      onClick={() => setShowImageEditor(true)}
+                      className="w-full justify-center"
+                    >
+                      <ImageIcon className="h-4 w-4 mr-2" />
+                      Subir Imagen
+                    </CyberButton>
+                  )}
+                </div>
               </div>
 
               <div className="flex items-center space-x-2">
