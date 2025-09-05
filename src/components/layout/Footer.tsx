@@ -2,8 +2,15 @@ import { Gamepad2, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Youtube } 
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Badge } from "@/components/ui/badge"
 
+import { useSiteSettings } from '@/hooks/useSiteSettings'
+
 const Footer = () => {
+  const { settings, loading } = useSiteSettings()
   const currentYear = new Date().getFullYear()
+
+  const address = settings.contact_address || 'Buenos Aires, Argentina'
+  const phone = settings.whatsapp_number || '+54 9 11 1234-5678'
+  const email = settings.contact_email || 'soporte@virtualgame.com'
 
   return (
     <footer className="bg-gradient-dark border-t border-primary/20 relative overflow-hidden">
@@ -30,15 +37,15 @@ const Footer = () => {
             <div className="space-y-3 text-sm">
               <div className="flex items-center space-x-3 text-muted-foreground">
                 <MapPin className="h-4 w-4 text-primary" />
-                <span>Buenos Aires, Argentina</span>
+                <span>{address}</span>
               </div>
               <div className="flex items-center space-x-3 text-muted-foreground">
                 <Phone className="h-4 w-4 text-secondary" />
-                <span>+54 9 11 1234-5678</span>
+                <span>{phone}</span>
               </div>
               <div className="flex items-center space-x-3 text-muted-foreground">
                 <Mail className="h-4 w-4 text-accent" />
-                <span>soporte@virtualgame.com</span>
+                <span>{email}</span>
               </div>
             </div>
 
