@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/contexts/AuthContext"
+import { useTheme } from "@/contexts/ThemeContext"
 import { supabase } from "@/integrations/supabase/client"
 
 interface SiteSetting {
@@ -19,6 +20,7 @@ interface SiteSetting {
 
 const SettingsAdmin = () => {
   const { user } = useAuth()
+  const { colorSettings, setColorSettings, applyColors, resetColors: resetThemeColors, defaultColors } = useTheme()
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -35,29 +37,6 @@ const SettingsAdmin = () => {
     currency: 'ARS',
     tax_rate: '21'
   })
-  const [colorSettings, setColorSettings] = useState({
-    primary_hue: '326',
-    primary_saturation: '100',
-    primary_lightness: '51',
-    secondary_hue: '174', 
-    secondary_saturation: '100',
-    secondary_lightness: '48',
-    accent_hue: '48',
-    accent_saturation: '100',
-    accent_lightness: '52'
-  })
-
-  const defaultColors = {
-    primary_hue: '326',
-    primary_saturation: '100', 
-    primary_lightness: '51',
-    secondary_hue: '174',
-    secondary_saturation: '100',
-    secondary_lightness: '48', 
-    accent_hue: '48',
-    accent_saturation: '100',
-    accent_lightness: '52'
-  }
 
   useEffect(() => {
     if (user) {
@@ -96,43 +75,44 @@ const SettingsAdmin = () => {
       
       // Convert array of settings to object
       const settingsObj = { ...settings }
-      const colorsObj = { ...colorSettings }
       
       data?.forEach((setting: SiteSetting) => {
         if (setting.key in settingsObj) {
           settingsObj[setting.key as keyof typeof settings] = setting.value
-        } else if (setting.key in colorsObj) {
-          colorsObj[setting.key as keyof typeof colorSettings] = setting.value
         }
       })
       
       setSettings(settingsObj)
-      setColorSettings(colorsObj)
-      
-      // Apply colors to CSS
-      applyColors(colorsObj)
     } catch (error) {
       console.error('Error fetching settings:', error)
     }
   }
 
-  const applyColors = (colors: typeof colorSettings) => {
-    const root = document.documentElement
-    
-    // Apply primary color
-    root.style.setProperty('--primary', `${colors.primary_hue} ${colors.primary_saturation}% ${colors.primary_lightness}%`)
-    
-    // Apply secondary color
-    root.style.setProperty('--secondary', `${colors.secondary_hue} ${colors.secondary_saturation}% ${colors.secondary_lightness}%`)
-    
-    // Apply accent color
-    root.style.setProperty('--accent', `${colors.accent_hue} ${colors.accent_saturation}% ${colors.accent_lightness}%`)
-    
-    // Update gradients and glows
-    root.style.setProperty('--gradient-primary', `linear-gradient(135deg, hsl(${colors.primary_hue} ${colors.primary_saturation}% ${colors.primary_lightness}%), hsl(${colors.primary_hue} ${colors.primary_saturation}% 35%))`)
-    root.style.setProperty('--gradient-secondary', `linear-gradient(135deg, hsl(${colors.secondary_hue} ${colors.secondary_saturation}% ${colors.secondary_lightness}%), hsl(${colors.secondary_hue} ${colors.secondary_saturation}% 35%))`)
-    root.style.setProperty('--gradient-accent', `linear-gradient(135deg, hsl(${colors.accent_hue} ${colors.accent_saturation}% ${colors.accent_lightness}%), hsl(${colors.accent_hue} ${colors.accent_saturation}% 40%))`)
-    root.style.setProperty('--gradient-cyber', `linear-gradient(135deg, hsl(${colors.primary_hue} ${colors.primary_saturation}% ${colors.primary_lightness}%), hsl(${colors.secondary_hue} ${colors.secondary_saturation}% ${colors.secondary_lightness}%))`)
+  const saveSettings = async () => {
+    setSaving(true)
+    try {
+      // Prepare settings array for upsert
+      const settingsArray = Object.entries(settings).map(([key, value]) => ({
+        key,
+        value,
+        description: getSettingDescription(key)
+      }))
+
+      for (const setting of settingsArray) {
+        const { error } = await supabase
+          .from('site_settings')
+          .upsert(setting, { onConflict: 'key' })
+
+        if (error) throw error
+      }
+
+      alert('Configuración guardada exitosamente')
+    } catch (error: any) {
+      console.error('Error saving settings:', error)
+      alert(`Error al guardar configuración: ${error.message}`)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const saveColorSettings = async () => {
@@ -153,7 +133,6 @@ const SettingsAdmin = () => {
         if (error) throw error
       }
       
-      applyColors(colorSettings)
       alert('Colores guardados exitosamente')
     } catch (error: any) {
       console.error('Error saving colors:', error)
@@ -166,10 +145,6 @@ const SettingsAdmin = () => {
   const resetColors = async () => {
     if (!confirm('¿Estás seguro de que quieres restablecer los colores a los valores originales?')) return
     
-    setColorSettings(defaultColors)
-    applyColors(defaultColors)
-    
-    // Save default colors to database
     setSaving(true)
     try {
       const colorSettingsArray = Object.entries(defaultColors).map(([key, value]) => ({
@@ -186,6 +161,7 @@ const SettingsAdmin = () => {
         if (error) throw error
       }
       
+      resetThemeColors()
       alert('Colores restablecidos a valores originales')
     } catch (error: any) {
       console.error('Error resetting colors:', error)
@@ -236,33 +212,6 @@ const SettingsAdmin = () => {
     }
 
     return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
-  }
-
-  const saveSettings = async () => {
-    setSaving(true)
-    try {
-      // Prepare settings array for upsert
-      const settingsArray = Object.entries(settings).map(([key, value]) => ({
-        key,
-        value,
-        description: getSettingDescription(key)
-      }))
-
-      for (const setting of settingsArray) {
-        const { error } = await supabase
-          .from('site_settings')
-          .upsert(setting, { onConflict: 'key' })
-
-        if (error) throw error
-      }
-
-      alert('Configuración guardada exitosamente')
-    } catch (error: any) {
-      console.error('Error saving settings:', error)
-      alert(`Error al guardar configuración: ${error.message}`)
-    } finally {
-      setSaving(false)
-    }
   }
 
   const getSettingDescription = (key: string): string => {
@@ -514,7 +463,7 @@ const SettingsAdmin = () => {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="text-sm text-muted-foreground mb-4">
-                    Personaliza los colores principales del sistema. Los cambios se aplican en tiempo real.
+                    Personaliza los colores principales del sistema. Los cambios se aplican en tiempo real en toda la aplicación.
                   </div>
 
                   {/* Primary Color */}
