@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Navigate, useNavigate } from "react-router-dom"
 import { CreditCard, Mail, MapPin, Phone, User, ShoppingCart, Building2, Smartphone } from "lucide-react"
 import Header from "@/components/layout/Header"
@@ -34,9 +34,10 @@ const Checkout = () => {
   const { toast } = useToast()
   const navigate = useNavigate()
   const { settings } = useSiteSettings()
+  const { paymentMethods, loading: paymentMethodsLoading } = usePaymentMethods()
   
   const [loading, setLoading] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('bank_transfer')
+  const [paymentMethod, setPaymentMethod] = useState<string>('')
   const [formData, setFormData] = useState<CheckoutFormData>({
     email: user?.email || '',
     firstName: '',
@@ -47,6 +48,13 @@ const Checkout = () => {
     postalCode: '',
     notes: ''
   })
+
+  // Set default payment method when payment methods load
+  useEffect(() => {
+    if (paymentMethods.length > 0 && !paymentMethod) {
+      setPaymentMethod(paymentMethods[0].code)
+    }
+  }, [paymentMethods, paymentMethod])
 
   // Redirect if cart is empty
   if (items.length === 0) {
@@ -339,29 +347,46 @@ const Checkout = () => {
                 {/* Payment Method Selection */}
                 <div className="space-y-4 p-4 border border-primary/20 rounded-lg bg-card/10">
                   <Label className="text-base font-semibold">Método de Pago</Label>
-                  <RadioGroup value={paymentMethod} onValueChange={(value: PaymentMethod) => setPaymentMethod(value)}>
-                    <div className="flex items-center space-x-2 p-3 border border-primary/10 rounded-lg hover:bg-card/20 cursor-pointer">
-                      <RadioGroupItem value="bank_transfer" id="bank_transfer" />
-                      <Label htmlFor="bank_transfer" className="flex items-center gap-2 cursor-pointer flex-1">
-                        <Building2 className="h-4 w-4 text-blue-400" />
-                        <div>
-                          <div className="font-medium">Transferencia Bancaria</div>
-                          <div className="text-sm text-muted-foreground">Pago manual - Confirmación vía WhatsApp</div>
-                        </div>
-                      </Label>
+                  {paymentMethodsLoading ? (
+                    <div className="text-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
+                      <p className="text-sm text-muted-foreground">Cargando métodos de pago...</p>
                     </div>
-                    
-                    <div className="flex items-center space-x-2 p-3 border border-primary/10 rounded-lg hover:bg-card/20 cursor-pointer">
-                      <RadioGroupItem value="mercadopago" id="mercadopago" />
-                      <Label htmlFor="mercadopago" className="flex items-center gap-2 cursor-pointer flex-1">
-                        <CreditCard className="h-4 w-4 text-blue-500" />
-                        <div>
-                          <div className="font-medium">MercadoPago</div>
-                          <div className="text-sm text-muted-foreground">Pago inmediato - Tarjeta o transferencia</div>
-                        </div>
-                      </Label>
+                  ) : paymentMethods.length === 0 ? (
+                    <div className="text-center py-4">
+                      <p className="text-sm text-muted-foreground">No hay métodos de pago disponibles</p>
                     </div>
-                  </RadioGroup>
+                  ) : (
+                    <RadioGroup value={paymentMethod} onValueChange={(value: string) => setPaymentMethod(value)}>
+                      {paymentMethods.map((method) => {
+                        // Dynamic icon selection
+                        const getIcon = () => {
+                          switch (method.icon_name) {
+                            case 'CreditCard': return CreditCard
+                            case 'Building2': return Building2
+                            case 'Smartphone': return Smartphone
+                            default: return CreditCard
+                          }
+                        }
+                        const Icon = getIcon()
+                        
+                        return (
+                          <div key={method.code} className="flex items-center space-x-2 p-3 border border-primary/10 rounded-lg hover:bg-card/20 cursor-pointer">
+                            <RadioGroupItem value={method.code} id={method.code} />
+                            <Label htmlFor={method.code} className="flex items-center gap-2 cursor-pointer flex-1">
+                              <Icon className="h-4 w-4 text-blue-500" />
+                              <div>
+                                <div className="font-medium">{method.name}</div>
+                                {method.description && (
+                                  <div className="text-sm text-muted-foreground">{method.description}</div>
+                                )}
+                              </div>
+                            </Label>
+                          </div>
+                        )
+                      })}
+                    </RadioGroup>
+                  )}
                 </div>
 
               <CyberButton
