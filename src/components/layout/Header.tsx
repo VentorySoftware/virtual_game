@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useCart } from "@/contexts/CartContext"
 import { CartDrawer } from "@/components/cart/CartDrawer"
 import { supabase } from "@/integrations/supabase/client"
+import { useSiteSettings } from "@/hooks/useSiteSettings"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +23,7 @@ const Header = () => {
   const navigate = useNavigate()
   const { user, signOut } = useAuth()
   const { totalItems } = useCart()
+  const { settings } = useSiteSettings()
 
   useEffect(() => {
     if (user) {
@@ -68,7 +70,7 @@ const Header = () => {
             <span>🔒 Compra segura</span>
           </div>
           <div className="flex items-center space-x-4">
-            <span className="text-secondary">WhatsApp: +54 9 11 1234-5678</span>
+            <span className="text-secondary">WhatsApp: {settings.whatsapp_number || '+54 9 11 1234-5678'}</span>
           </div>
         </div>
       </div>
