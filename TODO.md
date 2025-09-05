@@ -1,0 +1,2 @@
+- [x] Update grid layout in Footer.tsx from lg:grid-cols-4 to lg:grid-cols-3
+- [x] Remove the Support section div from Footer.tsx

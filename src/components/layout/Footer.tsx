@@ -18,7 +18,7 @@ const Footer = () => {
       <div className="absolute inset-0 grid-pattern opacity-10" />
       
       <div className="container py-16 relative">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
           
           {/* Company Info */}
           <div className="space-y-6">
@@ -82,30 +82,6 @@ const Footer = () => {
                   <a 
                     href={link.href}
                     className="text-muted-foreground hover:text-primary transition-colors hover:neon-text"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Support */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold font-orbitron text-secondary">Soporte</h3>
-            <ul className="space-y-3 text-sm">
-              {[
-                { name: "Centro de Ayuda", href: "/help" },
-                { name: "FAQ", href: "/faq" },
-                { name: "Cómo Comprar", href: "/how-to-buy" },
-                { name: "Medios de Pago", href: "/payment-methods" },
-                { name: "Términos y Condiciones", href: "/terms" },
-                { name: "Política de Privacidad", href: "/privacy" },
-              ].map((link) => (
-                <li key={link.name}>
-                  <a 
-                    href={link.href}
-                    className="text-muted-foreground hover:text-secondary transition-colors hover:neon-text"
                   >
                     {link.name}
                   </a>
