@@ -48,7 +48,7 @@ export const ImageUploadCrop = ({
     reader.onload = (e) => {
       if (e.target?.result) {
         setImageSrc(e.target.result as string)
-        // Set default crop to center of image
+        // Reset crop settings for new image
         setCrop({
           unit: '%',
           x: 10,
@@ -56,6 +56,8 @@ export const ImageUploadCrop = ({
           width: 80,
           height: 80
         })
+        setCompletedCrop(undefined)
+        setRotation(0)
       }
     }
     reader.readAsDataURL(file)
@@ -231,13 +233,7 @@ export const ImageUploadCrop = ({
 
             {/* Action Buttons */}
             <div className="flex gap-2 justify-end">
-              <CyberButton variant="outline" onClick={() => {
-                setSelectedFile(null)
-                setImageSrc("")
-                setCrop(undefined)
-                setCompletedCrop(undefined)
-                setRotation(0)
-              }}>
+              <CyberButton variant="outline" onClick={() => fileInputRef.current?.click()}>
                 Cambiar Imagen
               </CyberButton>
               <CyberButton 
