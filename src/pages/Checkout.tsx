@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Navigate, useNavigate } from "react-router-dom"
-import { CreditCard, Mail, MapPin, Phone, User, ShoppingCart } from "lucide-react"
+import { CreditCard, Mail, MapPin, Phone, User, ShoppingCart, Building2, Smartphone } from "lucide-react"
 import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
 import { CyberButton } from "@/components/ui/cyber-button"
@@ -11,6 +11,8 @@ import { useCart } from "@/contexts/CartContext"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
+import { useSiteSettings } from "@/hooks/useSiteSettings"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 interface CheckoutFormData {
   email: string
@@ -23,13 +25,17 @@ interface CheckoutFormData {
   notes: string
 }
 
+type PaymentMethod = 'bank_transfer' | 'mercado_pago'
+
 const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart()
   const { user } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
+  const { settings } = useSiteSettings()
   
   const [loading, setLoading] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('bank_transfer')
   const [formData, setFormData] = useState<CheckoutFormData>({
     email: user?.email || '',
     firstName: '',
@@ -60,79 +66,136 @@ const Checkout = () => {
     }).format(price)
   }
 
+  const createOrder = async () => {
+    const orderData = {
+      user_id: user?.id || null,
+      order_number: `VG${Date.now()}`,
+      subtotal: totalPrice,
+      total: totalPrice,
+      status: 'pending' as const,
+      billing_info: {
+        email: formData.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        postalCode: formData.postalCode,
+      },
+      customer_notes: formData.notes,
+      payment_method: paymentMethod,
+      payment_status: 'pending'
+    }
+
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .insert(orderData)
+      .select()
+      .single()
+
+    if (orderError) throw orderError
+
+    // Create order items
+    const orderItems = items.map(item => ({
+      order_id: order.id,
+      product_id: item.product_id,
+      bundle_id: item.bundle_id,
+      product_name: item.product_name,
+      quantity: item.quantity,
+      price: item.price
+    }))
+
+    const { error: itemsError } = await supabase
+      .from('order_items')
+      .insert(orderItems)
+
+    if (itemsError) throw itemsError
+
+    return order
+  }
+
+  const generateWhatsAppMessage = (order: any) => {
+    let message = `🎮 *NUEVO PEDIDO - ${order.order_number}*\n\n`
+    message += `👤 *Cliente:* ${formData.firstName} ${formData.lastName}\n`
+    message += `📧 *Email:* ${formData.email}\n`
+    if (formData.phone) message += `📱 *Teléfono:* ${formData.phone}\n`
+    if (formData.address) message += `📍 *Dirección:* ${formData.address}, ${formData.city} ${formData.postalCode}\n`
+    message += `\n🛒 *PRODUCTOS:*\n`
+    
+    items.forEach((item, index) => {
+      message += `${index + 1}. ${item.product_name}\n`
+      message += `   Cantidad: ${item.quantity}\n`
+      message += `   Precio unitario: ${formatPrice(item.price)}\n`
+      message += `   Subtotal: ${formatPrice(item.price * item.quantity)}\n\n`
+    })
+    
+    message += `💰 *TOTAL: ${formatPrice(totalPrice)}*\n\n`
+    message += `💳 *Método de pago:* Transferencia Bancaria\n`
+    message += `📋 *Estado:* Pendiente de confirmación de pago\n`
+    
+    if (formData.notes) {
+      message += `\n📝 *Notas del cliente:*\n${formData.notes}\n`
+    }
+    
+    message += `\n⚠️ *Acción requerida:* Validar transferencia y confirmar pedido`
+    
+    return message
+  }
+
+  const handleBankTransfer = async (order: any) => {
+    const whatsappNumber = settings.whatsapp_number || "5411123456789"
+    const message = generateWhatsAppMessage(order)
+    const encodedMessage = encodeURIComponent(message)
+    
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, '_blank')
+    
+    toast({
+      title: "Pedido creado",
+      description: `Pedido ${order.order_number} creado. Se abrió WhatsApp para confirmar el pago.`,
+    })
+
+    await clearCart()
+    navigate(`/order-confirmation/${order.order_number}`)
+  }
+
+  const handleMercadoPago = async (order: any) => {
+    try {
+      const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-mercadopago-payment', {
+        body: { orderId: order.id }
+      })
+
+      if (paymentError) throw paymentError
+      if (!paymentData?.init_point) throw new Error('No payment URL received')
+
+      window.open(paymentData.init_point, '_blank')
+      
+      toast({
+        title: "Redirigiendo a MercadoPago",
+        description: `Pedido ${order.order_number} creado. Completá el pago en la nueva ventana.`,
+      })
+
+      await clearCart()
+      
+      setTimeout(() => {
+        navigate(`/order-confirmation/${order.order_number}`)
+      }, 2000)
+    } catch (error) {
+      throw error
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      // Create order in database
-      const orderData = {
-        user_id: user?.id || null,
-        order_number: `VG${Date.now()}`,
-        subtotal: totalPrice,
-        total: totalPrice,
-        status: 'draft' as const,
-        billing_info: {
-          email: formData.email,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          phone: formData.phone,
-          address: formData.address,
-          city: formData.city,
-          postalCode: formData.postalCode,
-        },
-        customer_notes: formData.notes,
-        payment_method: null,
-        payment_status: 'pending'
+      const order = await createOrder()
+
+      if (paymentMethod === 'bank_transfer') {
+        await handleBankTransfer(order)
+      } else if (paymentMethod === 'mercado_pago') {
+        await handleMercadoPago(order)
       }
-
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert(orderData)
-        .select()
-        .single()
-
-      if (orderError) throw orderError
-
-      // Create order items
-      const orderItems = items.map(item => ({
-        order_id: order.id,
-        product_id: item.product_id,
-        bundle_id: item.bundle_id,
-        product_name: item.product_name,
-        quantity: item.quantity,
-        price: item.price
-      }))
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems)
-
-      if (itemsError) throw itemsError
-
-      // Create Stripe payment session
-      const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment', {
-        body: { orderId: order.id }
-      })
-
-      if (paymentError) throw paymentError
-      if (!paymentData?.url) throw new Error('No payment URL received')
-
-      // Open Stripe checkout in a new tab
-      window.open(paymentData.url, '_blank')
-
-      toast({
-        title: "Redirigiendo al pago",
-        description: `Pedido ${order.order_number} creado. Completá el pago en la nueva ventana.`,
-      })
-
-      // Clear cart after successful order creation
-      await clearCart()
-
-      // Redirect to order confirmation after a short delay
-      setTimeout(() => {
-        navigate(`/order-confirmation/${order.order_number}`)
-      }, 2000)
       
     } catch (error) {
       console.error('Error creating order:', error)
@@ -278,13 +341,43 @@ const Checkout = () => {
                   />
                 </div>
 
+                {/* Payment Method Selection */}
+                <div className="space-y-4 p-4 border border-primary/20 rounded-lg bg-card/10">
+                  <Label className="text-base font-semibold">Método de Pago</Label>
+                  <RadioGroup value={paymentMethod} onValueChange={(value: PaymentMethod) => setPaymentMethod(value)}>
+                    <div className="flex items-center space-x-2 p-3 border border-primary/10 rounded-lg hover:bg-card/20 cursor-pointer">
+                      <RadioGroupItem value="bank_transfer" id="bank_transfer" />
+                      <Label htmlFor="bank_transfer" className="flex items-center gap-2 cursor-pointer flex-1">
+                        <Building2 className="h-4 w-4 text-blue-400" />
+                        <div>
+                          <div className="font-medium">Transferencia Bancaria</div>
+                          <div className="text-sm text-muted-foreground">Pago manual - Confirmación vía WhatsApp</div>
+                        </div>
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 p-3 border border-primary/10 rounded-lg hover:bg-card/20 cursor-pointer">
+                      <RadioGroupItem value="mercado_pago" id="mercado_pago" />
+                      <Label htmlFor="mercado_pago" className="flex items-center gap-2 cursor-pointer flex-1">
+                        <CreditCard className="h-4 w-4 text-blue-500" />
+                        <div>
+                          <div className="font-medium">MercadoPago</div>
+                          <div className="text-sm text-muted-foreground">Pago inmediato - Tarjeta o transferencia</div>
+                        </div>
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
               <CyberButton
                 type="submit"
                 className="w-full"
                 size="lg"
                 disabled={loading}
               >
-                {loading ? "Creando pedido..." : "Proceder al Pago"}
+                {loading ? "Creando pedido..." : 
+                 paymentMethod === 'bank_transfer' ? "Crear Pedido y Enviar por WhatsApp" : 
+                 "Proceder con MercadoPago"}
               </CyberButton>
               </form>
             </div>
