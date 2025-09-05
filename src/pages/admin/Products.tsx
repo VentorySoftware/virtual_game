@@ -14,8 +14,8 @@ import { supabase } from "@/integrations/supabase/client"
 import type { Product } from "@/types/database"
 
 interface ProductWithRelations extends Omit<Product, 'category' | 'platform'> {
-  category?: { name: string } | null
-  platform?: { name: string } | null
+  category?: { id: string; name: string } | null
+  platform?: { id: string; name: string } | null
 }
 
 const ProductsAdmin = () => {
@@ -27,6 +27,7 @@ const ProductsAdmin = () => {
   const [showCreateProduct, setShowCreateProduct] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
   const [platforms, setPlatforms] = useState<any[]>([])
+  const [editingProduct, setEditingProduct] = useState<ProductWithRelations | null>(null)
   const [newProduct, setNewProduct] = useState({
     title: '',
     description: '',
@@ -38,7 +39,7 @@ const ProductsAdmin = () => {
     category_id: '',
     platform_id: '',
     stock_quantity: '0',
-    type: 'digital' as 'digital' | 'physical' | 'preorder',
+    type: 'digital' as 'digital' | 'physical' | 'preorder' | 'bundle',
     is_featured: false
   })
 
@@ -79,8 +80,8 @@ const ProductsAdmin = () => {
         .from('products')
         .select(`
           *,
-          category:categories(name),
-          platform:platforms(name)
+          category:categories(id, name),
+          platform:platforms(id, name)
         `)
         .order('created_at', { ascending: false })
 
@@ -154,20 +155,7 @@ const ProductsAdmin = () => {
       if (error) throw error
 
       setShowCreateProduct(false)
-      setNewProduct({
-        title: '',
-        description: '',
-        short_description: '',
-        price: '',
-        original_price: '',
-        sku: '',
-        image_url: '',
-        category_id: '',
-        platform_id: '',
-        stock_quantity: '0',
-        type: 'digital',
-        is_featured: false
-      })
+      resetForm()
       
       await fetchProducts()
       alert('Producto creado exitosamente')
@@ -177,21 +165,137 @@ const ProductsAdmin = () => {
     }
   }
 
-  const handleDeleteProduct = async (productId: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar este producto?')) return
-
+  const toggleProductVisibility = async (productId: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
         .from('products')
-        .update({ is_active: false })
+        .update({ is_active: !currentStatus })
         .eq('id', productId)
 
       if (error) throw error
       
       await fetchProducts()
+      alert(`Producto ${!currentStatus ? 'activado' : 'desactivado'} exitosamente`)
+    } catch (error) {
+      console.error('Error updating product visibility:', error)
+      alert('Error al cambiar la visibilidad del producto')
+    }
+  }
+
+  const startEditing = (product: ProductWithRelations) => {
+    setEditingProduct(product)
+    setNewProduct({
+      title: product.title,
+      description: product.description || '',
+      short_description: product.short_description || '',
+      price: product.price.toString(),
+      original_price: product.original_price?.toString() || '',
+      sku: product.sku || '',
+      image_url: product.image_url || '',
+      category_id: product.category?.id || '',
+      platform_id: product.platform?.id || '',
+      stock_quantity: product.stock_quantity.toString(),
+      type: product.type,
+      is_featured: product.is_featured
+    })
+    setShowCreateProduct(true)
+  }
+
+  const updateProduct = async () => {
+    if (!editingProduct) return
+
+    try {
+      if (!newProduct.title || !newProduct.price) {
+        alert('Título y precio son obligatorios')
+        return
+      }
+
+      const slug = newProduct.title.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+
+      const { error } = await supabase
+        .from('products')
+        .update({
+          title: newProduct.title,
+          slug: slug,
+          description: newProduct.description,
+          short_description: newProduct.short_description,
+          price: parseFloat(newProduct.price),
+          original_price: newProduct.original_price ? parseFloat(newProduct.original_price) : null,
+          sku: newProduct.sku,
+          image_url: newProduct.image_url,
+          category_id: newProduct.category_id || null,
+          platform_id: newProduct.platform_id || null,
+          stock_quantity: parseInt(newProduct.stock_quantity) || 0,
+          type: newProduct.type,
+          is_featured: newProduct.is_featured
+        })
+        .eq('id', editingProduct.id)
+
+      if (error) throw error
+
+      setShowCreateProduct(false)
+      setEditingProduct(null)
+      resetForm()
+      
+      await fetchProducts()
+      alert('Producto actualizado exitosamente')
+    } catch (error: any) {
+      console.error('Error updating product:', error)
+      alert(`Error al actualizar producto: ${error.message}`)
+    }
+  }
+
+  const resetForm = () => {
+    setNewProduct({
+      title: '',
+      description: '',
+      short_description: '',
+      price: '',
+      original_price: '',
+      sku: '',
+      image_url: '',
+      category_id: '',
+      platform_id: '',
+      stock_quantity: '0',
+      type: 'digital',
+      is_featured: false
+    })
+  }
+
+  const handleDeleteProduct = async (product: ProductWithRelations) => {
+    const confirmMessage = product.is_active 
+      ? '¿Estás seguro de que quieres desactivar este producto? Los usuarios no podrán verlo.'
+      : '¿Estás seguro de que quieres eliminar permanentemente este producto?'
+    
+    if (!confirm(confirmMessage)) return
+
+    try {
+      if (product.is_active) {
+        // Soft delete: just deactivate
+        const { error } = await supabase
+          .from('products')
+          .update({ is_active: false })
+          .eq('id', product.id)
+        
+        if (error) throw error
+        alert('Producto desactivado exitosamente')
+      } else {
+        // Hard delete: remove from database
+        const { error } = await supabase
+          .from('products')
+          .delete()
+          .eq('id', product.id)
+        
+        if (error) throw error
+        alert('Producto eliminado permanentemente')
+      }
+      
+      await fetchProducts()
     } catch (error) {
       console.error('Error deleting product:', error)
-      alert('Error al eliminar el producto')
+      alert('Error al procesar la eliminación del producto')
     }
   }
 
@@ -233,11 +337,13 @@ const ProductsAdmin = () => {
             </p>
         </div>
 
-        {/* Create Product Modal */}
+        {/* Create/Edit Product Modal */}
         {showCreateProduct && (
           <Card className="cyber-card">
             <CardHeader>
-              <CardTitle>Crear Nuevo Producto</CardTitle>
+              <CardTitle>
+                {editingProduct ? 'Editar Producto' : 'Crear Nuevo Producto'}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -374,7 +480,7 @@ const ProductsAdmin = () => {
                     <SelectContent>
                       <SelectItem value="digital">Digital</SelectItem>
                       <SelectItem value="physical">Físico</SelectItem>
-                      <SelectItem value="preorder">Pre-orden</SelectItem>
+                      <SelectItem value="bundle">Bundle</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -404,29 +510,17 @@ const ProductsAdmin = () => {
 
               <div className="flex gap-2">
                 <CyberButton 
-                  onClick={createProduct} 
+                  onClick={editingProduct ? updateProduct : createProduct} 
                   disabled={!newProduct.title || !newProduct.price}
                 >
-                  Crear Producto
+                  {editingProduct ? 'Actualizar' : 'Crear'} Producto
                 </CyberButton>
                 <CyberButton 
                   variant="outline" 
                   onClick={() => {
                     setShowCreateProduct(false)
-                    setNewProduct({
-                      title: '',
-                      description: '',
-                      short_description: '',
-                      price: '',
-                      original_price: '',
-                      sku: '',
-                      image_url: '',
-                      category_id: '',
-                      platform_id: '',
-                      stock_quantity: '0',
-                      type: 'digital',
-                      is_featured: false
-                    })
+                    setEditingProduct(null)
+                    resetForm()
                   }}
                 >
                   Cancelar
@@ -437,7 +531,11 @@ const ProductsAdmin = () => {
         )}
           <CyberButton 
             className="flex items-center gap-2"
-            onClick={() => setShowCreateProduct(true)}
+            onClick={() => {
+              setEditingProduct(null)
+              resetForm()
+              setShowCreateProduct(true)
+            }}
           >
             <Plus className="h-4 w-4" />
             Nuevo Producto
@@ -536,17 +634,30 @@ const ProductsAdmin = () => {
                       )}
                     </div>
                     <div className="flex items-center gap-1">
-                      <CyberButton variant="ghost" size="icon" className="h-8 w-8">
-                        <Eye className="h-4 w-4" />
+                      <CyberButton 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => toggleProductVisibility(product.id, product.is_active)}
+                        title={product.is_active ? 'Desactivar producto' : 'Activar producto'}
+                      >
+                        <Eye className={`h-4 w-4 ${product.is_active ? 'text-primary' : 'text-muted-foreground'}`} />
                       </CyberButton>
-                      <CyberButton variant="ghost" size="icon" className="h-8 w-8">
+                      <CyberButton 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => startEditing(product)}
+                        title="Editar producto"
+                      >
                         <Edit className="h-4 w-4" />
                       </CyberButton>
                       <CyberButton 
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteProduct(product.id)}
+                        onClick={() => handleDeleteProduct(product)}
+                        title={product.is_active ? 'Desactivar producto' : 'Eliminar permanentemente'}
                       >
                         <Trash2 className="h-4 w-4" />
                       </CyberButton>
