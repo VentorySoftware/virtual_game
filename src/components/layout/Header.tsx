@@ -1,11 +1,12 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { Search, ShoppingCart, User, Menu, X, Gamepad2, LogOut } from "lucide-react"
+import { Search, ShoppingCart, User, Menu, X, Gamepad2, LogOut, Settings } from "lucide-react"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/contexts/AuthContext"
 import { useCart } from "@/contexts/CartContext"
 import { CartDrawer } from "@/components/cart/CartDrawer"
+import { supabase } from "@/integrations/supabase/client"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,10 +17,28 @@ import {
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
   const { user, signOut } = useAuth()
   const { totalItems } = useCart()
+
+  useEffect(() => {
+    if (user) {
+      checkAdminStatus()
+    }
+  }, [user])
+
+  const checkAdminStatus = async () => {
+    if (!user) return
+    try {
+      const { data } = await supabase.rpc('is_admin', { _user_id: user.id })
+      setIsAdmin(data || false)
+    } catch (error) {
+      console.error('Error checking admin status:', error)
+      setIsAdmin(false)
+    }
+  }
 
   const navigation = [
     { name: "Inicio", href: "/" },
@@ -110,6 +129,12 @@ const Header = () => {
                   <User className="mr-2 h-4 w-4" />
                   Mi Perfil
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem onClick={() => navigate("/admin")}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Panel Admin
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Cerrar Sesión
