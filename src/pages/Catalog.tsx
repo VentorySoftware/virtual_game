@@ -29,9 +29,9 @@ type SortOption = 'newest' | 'oldest' | 'price-low' | 'price-high' | 'rating' | 
 
 const Catalog = () => {
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState<string>("")
-  const [selectedPlatform, setSelectedPlatform] = useState<string>("")
-  const [selectedType, setSelectedType] = useState<string>("")
+  const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const [selectedPlatform, setSelectedPlatform] = useState<string>("all")
+  const [selectedType, setSelectedType] = useState<string>("all")
   const [sortBy, setSortBy] = useState<SortOption>('newest')
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [showFilters, setShowFilters] = useState(false)
@@ -56,21 +56,21 @@ const Catalog = () => {
     }
 
     // Category filter
-    if (selectedCategory) {
+    if (selectedCategory && selectedCategory !== "all") {
       filtered = filtered.filter(product => 
         product.category?.slug === selectedCategory
       )
     }
 
     // Platform filter
-    if (selectedPlatform) {
+    if (selectedPlatform && selectedPlatform !== "all") {
       filtered = filtered.filter(product => 
         product.platform?.slug === selectedPlatform
       )
     }
 
     // Type filter
-    if (selectedType) {
+    if (selectedType && selectedType !== "all") {
       filtered = filtered.filter(product => product.type === selectedType)
     }
 
@@ -99,13 +99,13 @@ const Catalog = () => {
 
   const clearFilters = () => {
     setSearchQuery("")
-    setSelectedCategory("")
-    setSelectedPlatform("")
-    setSelectedType("")
+    setSelectedCategory("all")
+    setSelectedPlatform("all")
+    setSelectedType("all")
     setSortBy('newest')
   }
 
-  const hasActiveFilters = searchQuery || selectedCategory || selectedPlatform || selectedType || sortBy !== 'newest'
+  const hasActiveFilters = searchQuery || selectedCategory !== "all" || selectedPlatform !== "all" || selectedType !== "all" || sortBy !== 'newest'
 
   if (loading) {
     return (
@@ -184,7 +184,7 @@ const Catalog = () => {
                   <SelectValue placeholder="Categoría" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas las categorías</SelectItem>
+                  <SelectItem value="all">Todas las categorías</SelectItem>
                   {categories.map((category) => (
                     <SelectItem key={category.id} value={category.slug}>
                       {category.name}
@@ -198,7 +198,7 @@ const Catalog = () => {
                   <SelectValue placeholder="Plataforma" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas las plataformas</SelectItem>
+                  <SelectItem value="all">Todas las plataformas</SelectItem>
                   {platforms.map((platform) => (
                     <SelectItem key={platform.id} value={platform.slug}>
                       {platform.name}
@@ -212,7 +212,7 @@ const Catalog = () => {
                   <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos los tipos</SelectItem>
+                  <SelectItem value="all">Todos los tipos</SelectItem>
                   <SelectItem value="digital">Digital</SelectItem>
                   <SelectItem value="preorder">Pre-orden</SelectItem>
                   <SelectItem value="bundle">Pack/Bundle</SelectItem>
@@ -244,22 +244,22 @@ const Catalog = () => {
                       <X className="w-3 h-3 cursor-pointer" onClick={() => setSearchQuery("")} />
                     </Badge>
                   )}
-                  {selectedCategory && (
+                  {selectedCategory && selectedCategory !== "all" && (
                     <Badge variant="secondary" className="gap-1">
                       {categories.find(c => c.slug === selectedCategory)?.name}
-                      <X className="w-3 h-3 cursor-pointer" onClick={() => setSelectedCategory("")} />
+                      <X className="w-3 h-3 cursor-pointer" onClick={() => setSelectedCategory("all")} />
                     </Badge>
                   )}
-                  {selectedPlatform && (
+                  {selectedPlatform && selectedPlatform !== "all" && (
                     <Badge variant="secondary" className="gap-1">
                       {platforms.find(p => p.slug === selectedPlatform)?.name}
-                      <X className="w-3 h-3 cursor-pointer" onClick={() => setSelectedPlatform("")} />
+                      <X className="w-3 h-3 cursor-pointer" onClick={() => setSelectedPlatform("all")} />
                     </Badge>
                   )}
-                  {selectedType && (
+                  {selectedType && selectedType !== "all" && (
                     <Badge variant="secondary" className="gap-1">
                       {selectedType === 'preorder' ? 'Pre-orden' : selectedType === 'bundle' ? 'Pack' : 'Digital'}
-                      <X className="w-3 h-3 cursor-pointer" onClick={() => setSelectedType("")} />
+                      <X className="w-3 h-3 cursor-pointer" onClick={() => setSelectedType("all")} />
                     </Badge>
                   )}
                 </div>
