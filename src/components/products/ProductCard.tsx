@@ -3,17 +3,34 @@ import { CyberButton } from "@/components/ui/cyber-button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Star, ShoppingCart, Eye } from "lucide-react"
 import { Link } from "react-router-dom"
+import { useCart } from "@/contexts/CartContext"
 import type { Product } from "@/types/database"
 
 interface ProductCardProps {
   product: Product
+  showAddToCart?: boolean
 }
 
-const ProductCard = ({ product }: ProductCardProps) => {
+export const ProductCard = ({ product, showAddToCart = false }: ProductCardProps) => {
+  const { addToCart } = useCart()
   const discountPercentage = product.discount_percentage || 0
   const isPreOrder = product.type === 'preorder'
   const platformName = product.platform?.name || 'Multi'
   const releaseDate = product.preorder_date ? new Date(product.preorder_date).toLocaleDateString('es-AR') : null
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    await addToCart({
+      product_id: product.id,
+      product_name: product.title,
+      price: Number(product.price),
+      quantity: 1,
+      image_url: product.image_url || undefined,
+      type: 'product'
+    })
+  }
 
   return (
     <Card className="cyber-card group hover:shadow-glow-primary transition-all duration-300 transform hover:-translate-y-1">
@@ -51,14 +68,18 @@ const ProductCard = ({ product }: ProductCardProps) => {
           {/* Hover overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <div className="absolute bottom-2 left-2 right-2 flex gap-2">
-              <CyberButton variant="secondary" size="sm" className="flex-1">
-                <Eye className="w-4 h-4 mr-1" />
-                Ver
+              <CyberButton variant="secondary" size="sm" className="flex-1" asChild>
+                <Link to={`/product/${product.slug}`}>
+                  <Eye className="w-4 h-4 mr-1" />
+                  Ver
+                </Link>
               </CyberButton>
-              <CyberButton variant="default" size="sm" className="flex-1">
-                <ShoppingCart className="w-4 h-4 mr-1" />
-                Carrito
-              </CyberButton>
+              {showAddToCart && (
+                <CyberButton variant="default" size="sm" className="flex-1" onClick={handleAddToCart}>
+                  <ShoppingCart className="w-4 h-4 mr-1" />
+                  Carrito
+                </CyberButton>
+              )}
             </div>
           </div>
         </div>
@@ -124,6 +145,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
           variant="cyber" 
           className="flex-1"
           size="sm"
+          onClick={handleAddToCart}
         >
           <ShoppingCart className="w-4 h-4 mr-1" />
           {isPreOrder ? 'Pre-ordenar' : 'Comprar'}

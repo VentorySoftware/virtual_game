@@ -4,6 +4,8 @@ import { Search, ShoppingCart, User, Menu, X, Gamepad2, LogOut } from "lucide-re
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/contexts/AuthContext"
+import { useCart } from "@/contexts/CartContext"
+import { CartDrawer } from "@/components/cart/CartDrawer"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +19,7 @@ const Header = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, signOut } = useAuth()
+  const { totalItems } = useCart()
 
   const navigation = [
     { name: "Inicio", href: "/" },
@@ -123,12 +126,16 @@ const Header = () => {
             </CyberButton>
           )}
           
-          <CyberButton variant="ghost" size="icon" className="relative">
-            <ShoppingCart className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-xs text-primary-foreground flex items-center justify-center animate-cyber-pulse">
-              3
-            </span>
-          </CyberButton>
+          <CartDrawer>
+            <CyberButton variant="ghost" size="icon" className="relative">
+              <ShoppingCart className="h-5 w-5" />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-xs text-primary-foreground flex items-center justify-center animate-cyber-pulse">
+                  {totalItems}
+                </span>
+              )}
+            </CyberButton>
+          </CartDrawer>
 
           {/* Mobile menu button */}
           <CyberButton
