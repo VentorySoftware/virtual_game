@@ -44,6 +44,7 @@ interface Product {
 
 const PromotionsAdmin = () => {
   const { user } = useAuth()
+  const notifications = useNotifications()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -108,7 +109,7 @@ const PromotionsAdmin = () => {
   const createPromotion = async () => {
     try {
       if (!promotionData.productId) {
-        alert('Selecciona un producto')
+        notifications.warning('Selecciona un producto')
         return
       }
 
@@ -143,10 +144,10 @@ const PromotionsAdmin = () => {
       setShowCreatePromotion(false)
       resetForm()
       await fetchProducts()
-      alert('Promoción creada exitosamente')
+      notifications.success('Promoción creada exitosamente')
     } catch (error: any) {
       console.error('Error creating promotion:', error)
-      alert(`Error al crear promoción: ${error.message}`)
+      notifications.error(`Error al crear promoción: ${error.message}`)
     }
   }
 
@@ -186,10 +187,10 @@ const PromotionsAdmin = () => {
       setShowCreatePromotion(false)
       resetForm()
       await fetchProducts()
-      alert('Promoción actualizada exitosamente')
+      notifications.success('Promoción actualizada exitosamente')
     } catch (error: any) {
       console.error('Error updating promotion:', error)
-      alert(`Error al actualizar promoción: ${error.message}`)
+      notifications.error(`Error al actualizar promoción: ${error.message}`)
     }
   }
 
@@ -217,10 +218,10 @@ const PromotionsAdmin = () => {
       if (error) throw error
       
       await fetchProducts()
-      alert('Promoción removida exitosamente')
+      notifications.success('Promoción removida exitosamente')
     } catch (error: any) {
       console.error('Error removing promotion:', error)
-      alert(`Error al remover promoción: ${error.message}`)
+      notifications.error(`Error al remover promoción: ${error.message}`)
     }
   }
 

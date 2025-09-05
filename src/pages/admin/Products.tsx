@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { ImageUploadCrop } from "@/components/admin/ImageUploadCrop"
+import { useNotifications } from "@/hooks/useNotifications"
 import type { Product } from "@/types/database"
 
 interface ProductWithRelations extends Omit<Product, 'category' | 'platform'> {
@@ -21,6 +22,7 @@ interface ProductWithRelations extends Omit<Product, 'category' | 'platform'> {
 
 const ProductsAdmin = () => {
   const { user } = useAuth()
+  const notifications = useNotifications()
   const [products, setProducts] = useState<ProductWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -129,7 +131,7 @@ const ProductsAdmin = () => {
   const createProduct = async () => {
     try {
       if (!newProduct.title || !newProduct.price) {
-        alert('Título y precio son obligatorios')
+        notifications.warning('Título y precio son obligatorios')
         return
       }
 
@@ -162,10 +164,10 @@ const ProductsAdmin = () => {
       resetForm()
       
       await fetchProducts()
-      alert('Producto creado exitosamente')
+      notifications.success('Producto creado exitosamente')
     } catch (error: any) {
       console.error('Error creating product:', error)
-      alert(`Error al crear producto: ${error.message}`)
+      notifications.error(`Error al crear producto: ${error.message}`)
     }
   }
 
@@ -179,10 +181,10 @@ const ProductsAdmin = () => {
       if (error) throw error
       
       await fetchProducts()
-      alert(`Producto ${!currentStatus ? 'activado' : 'desactivado'} exitosamente`)
+      notifications.success(`Producto ${!currentStatus ? 'activado' : 'desactivado'} exitosamente`)
     } catch (error) {
       console.error('Error updating product visibility:', error)
-      alert('Error al cambiar la visibilidad del producto')
+      notifications.error('Error al cambiar la visibilidad del producto')
     }
   }
 
@@ -210,7 +212,7 @@ const ProductsAdmin = () => {
 
     try {
       if (!newProduct.title || !newProduct.price) {
-        alert('Título y precio son obligatorios')
+        notifications.warning('Título y precio son obligatorios')
         return
       }
 
@@ -244,10 +246,10 @@ const ProductsAdmin = () => {
       resetForm()
       
       await fetchProducts()
-      alert('Producto actualizado exitosamente')
+      notifications.success('Producto actualizado exitosamente')
     } catch (error: any) {
       console.error('Error updating product:', error)
-      alert(`Error al actualizar producto: ${error.message}`)
+      notifications.error(`Error al actualizar producto: ${error.message}`)
     }
   }
 
@@ -274,7 +276,10 @@ const ProductsAdmin = () => {
       ? '¿Estás seguro de que quieres desactivar este producto? Los usuarios no podrán verlo.'
       : '¿Estás seguro de que quieres eliminar permanentemente este producto?'
     
-    if (!confirm(confirmMessage)) return
+    const confirmed = await notifications.confirm({
+      description: confirmMessage
+    })
+    if (!confirmed) return
 
     try {
       if (product.is_active) {
@@ -285,7 +290,7 @@ const ProductsAdmin = () => {
           .eq('id', product.id)
         
         if (error) throw error
-        alert('Producto desactivado exitosamente')
+        notifications.success('Producto desactivado exitosamente')
       } else {
         // Hard delete: remove from database
         const { error } = await supabase
@@ -294,13 +299,13 @@ const ProductsAdmin = () => {
           .eq('id', product.id)
         
         if (error) throw error
-        alert('Producto eliminado permanentemente')
+        notifications.success('Producto eliminado permanentemente')
       }
       
       await fetchProducts()
     } catch (error) {
       console.error('Error deleting product:', error)
-      alert('Error al procesar la eliminación del producto')
+      notifications.error('Error al procesar la eliminación del producto')
     }
   }
 

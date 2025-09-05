@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
+import { useNotifications } from "@/hooks/useNotifications"
 
 interface User {
   id: string
@@ -28,6 +29,7 @@ interface User {
 
 const UsersAdmin = () => {
   const { user } = useAuth()
+  const notifications = useNotifications()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -130,7 +132,7 @@ const UsersAdmin = () => {
       await fetchUsers()
     } catch (error) {
       console.error('Error updating user role:', error)
-      alert('Error al actualizar el rol del usuario')
+      notifications.error('Error al actualizar el rol del usuario')
     }
   }
 
@@ -157,10 +159,10 @@ const UsersAdmin = () => {
         fetchUsers()
       }, 1000)
       
-      alert('Usuario creado exitosamente')
+      notifications.success('Usuario creado exitosamente')
     } catch (error: any) {
       console.error('Error creating user:', error)
-      alert(`Error al crear usuario: ${error.message}`)
+      notifications.error(`Error al crear usuario: ${error.message}`)
     }
   }
 
@@ -168,10 +170,10 @@ const UsersAdmin = () => {
     try {
       // Aquí podrías implementar lógica para activar/desactivar usuarios
       // Por ejemplo, agregar un campo is_active en profiles o usar auth admin
-      alert(`Funcionalidad de ${currentStatus ? 'desactivar' : 'activar'} usuario pendiente de implementar`)
+      notifications.info(`Funcionalidad de ${currentStatus ? 'desactivar' : 'activar'} usuario pendiente de implementar`)
     } catch (error) {
       console.error('Error toggling user status:', error)
-      alert('Error al cambiar el estado del usuario')
+      notifications.error('Error al cambiar el estado del usuario')
     }
   }
 

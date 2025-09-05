@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
+import { useNotifications } from "@/hooks/useNotifications"
 
 interface OrderWithRelations {
   id: string
@@ -34,6 +35,7 @@ interface OrderWithRelations {
 
 const OrdersAdmin = () => {
   const { user } = useAuth()
+  const notifications = useNotifications()
   const [orders, setOrders] = useState<OrderWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -97,7 +99,7 @@ const OrdersAdmin = () => {
       await fetchOrders()
     } catch (error) {
       console.error('Error updating order status:', error)
-      alert('Error al actualizar el estado del pedido')
+      notifications.error('Error al actualizar el estado del pedido')
     }
   }
 

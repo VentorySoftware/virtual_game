@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { ImageUploadCrop } from "@/components/admin/ImageUploadCrop"
+import { useNotifications } from "@/hooks/useNotifications"
 
 interface Category {
   id: string
@@ -26,6 +27,7 @@ interface Category {
 
 const CategoriesAdmin = () => {
   const { user } = useAuth()
+  const notifications = useNotifications()
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -84,7 +86,7 @@ const CategoriesAdmin = () => {
   const createCategory = async () => {
     try {
       if (!newCategory.name) {
-        alert('El nombre de la categoría es obligatorio')
+        notifications.warning('El nombre de la categoría es obligatorio')
         return
       }
 
@@ -108,10 +110,10 @@ const CategoriesAdmin = () => {
       setShowCreateCategory(false)
       resetForm()
       await fetchCategories()
-      alert('Categoría creada exitosamente')
+      notifications.success('Categoría creada exitosamente')
     } catch (error: any) {
       console.error('Error creating category:', error)
-      alert(`Error al crear categoría: ${error.message}`)
+      notifications.error(`Error al crear categoría: ${error.message}`)
     }
   }
 
@@ -139,15 +141,18 @@ const CategoriesAdmin = () => {
       setEditingCategory(null)
       resetForm()
       await fetchCategories()
-      alert('Categoría actualizada exitosamente')
+      notifications.success('Categoría actualizada exitosamente')
     } catch (error: any) {
       console.error('Error updating category:', error)
-      alert(`Error al actualizar categoría: ${error.message}`)
+      notifications.error(`Error al actualizar categoría: ${error.message}`)
     }
   }
 
   const deleteCategory = async (categoryId: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta categoría?')) return
+    const confirmed = await notifications.confirm({
+      description: '¿Estás seguro de que quieres eliminar esta categoría?'
+    })
+    if (!confirmed) return
 
     try {
       const { error } = await supabase
@@ -160,7 +165,7 @@ const CategoriesAdmin = () => {
       await fetchCategories()
     } catch (error) {
       console.error('Error deleting category:', error)
-      alert('Error al eliminar la categoría')
+      notifications.error('Error al eliminar la categoría')
     }
   }
 

@@ -21,6 +21,7 @@ interface SiteSetting {
 const SettingsAdmin = () => {
   const { user } = useAuth()
   const { colorSettings, setColorSettings, applyColors, resetColors: resetThemeColors, defaultColors } = useTheme()
+  const notifications = useNotifications()
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -106,10 +107,10 @@ const SettingsAdmin = () => {
         if (error) throw error
       }
 
-      alert('Configuración guardada exitosamente')
+      notifications.success('Configuración guardada exitosamente')
     } catch (error: any) {
       console.error('Error saving settings:', error)
-      alert(`Error al guardar configuración: ${error.message}`)
+      notifications.error(`Error al guardar configuración: ${error.message}`)
     } finally {
       setSaving(false)
     }
@@ -133,17 +134,20 @@ const SettingsAdmin = () => {
         if (error) throw error
       }
       
-      alert('Colores guardados exitosamente')
+      notifications.success('Colores guardados exitosamente')
     } catch (error: any) {
       console.error('Error saving colors:', error)
-      alert(`Error al guardar colores: ${error.message}`)
+      notifications.error(`Error al guardar colores: ${error.message}`)
     } finally {
       setSaving(false)
     }
   }
 
   const resetColors = async () => {
-    if (!confirm('¿Estás seguro de que quieres restablecer los colores a los valores originales?')) return
+    const confirmed = await notifications.confirm({
+      description: '¿Estás seguro de que quieres restablecer los colores a los valores originales?'
+    })
+    if (!confirmed) return
     
     setSaving(true)
     try {
@@ -162,10 +166,10 @@ const SettingsAdmin = () => {
       }
       
       resetThemeColors()
-      alert('Colores restablecidos a valores originales')
+      notifications.success('Colores restablecidos a valores originales')
     } catch (error: any) {
       console.error('Error resetting colors:', error)
-      alert(`Error al restablecer colores: ${error.message}`)
+      notifications.error(`Error al restablecer colores: ${error.message}`)
     } finally {
       setSaving(false)
     }
