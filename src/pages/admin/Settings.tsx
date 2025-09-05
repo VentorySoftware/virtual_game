@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/contexts/AuthContext"
 import { useTheme } from "@/contexts/ThemeContext"
 import { supabase } from "@/integrations/supabase/client"
+import { useNotifications } from "@/hooks/useNotifications"
 
 interface SiteSetting {
   key: string
