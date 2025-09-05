@@ -26,6 +26,7 @@ import PaymentMethodsAdmin from "./pages/admin/PaymentMethods";
 import OrdersAdmin from "./pages/admin/Orders";
 import UsersAdmin from "./pages/admin/Users";
 import SettingsAdmin from "./pages/admin/Settings";
+import BusinessHoursAdmin from "./pages/admin/BusinessHours";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => (
               <Route path="/admin/payment-methods" element={<PaymentMethodsAdmin />} />
               <Route path="/admin/orders" element={<OrdersAdmin />} />
               <Route path="/admin/users" element={<UsersAdmin />} />
+              <Route path="/admin/business-hours" element={<BusinessHoursAdmin />} />
               <Route path="/admin/settings" element={<SettingsAdmin />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/catalog" element={<Catalog />} />

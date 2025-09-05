@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useNotifications } from './useNotifications'
 import { Tables } from '@/integrations/supabase/types'
@@ -14,11 +14,7 @@ export const useBusinessHours = () => {
   const [loading, setLoading] = useState(true)
   const notifications = useNotifications()
 
-  useEffect(() => {
-    fetchBusinessHours()
-  }, [])
-
-  const fetchBusinessHours = async () => {
+  const fetchBusinessHours = useCallback(async () => {
     try {
       setLoading(true)
       const { data, error } = await supabase
@@ -28,13 +24,18 @@ export const useBusinessHours = () => {
 
       if (error) throw error
       setBusinessHours(data || [])
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching business hours:', error)
-      notifications.error(`Error al cargar horarios: ${error.message}`)
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+      notifications.error(`Error al cargar horarios: ${errorMessage}`)
     } finally {
       setLoading(false)
     }
-  }
+  }, [notifications])
+
+  useEffect(() => {
+    fetchBusinessHours()
+  }, [fetchBusinessHours])
 
   const saveBusinessHour = async (hourData: {
     day_type: string
@@ -61,9 +62,10 @@ export const useBusinessHours = () => {
 
       notifications.success('Horarios guardados exitosamente')
       return data
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving business hours:', error)
-      notifications.error(`Error al guardar horarios: ${error.message}`)
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+      notifications.error(`Error al guardar horarios: ${errorMessage}`)
       throw error
     }
   }
@@ -81,9 +83,10 @@ export const useBusinessHours = () => {
       setBusinessHours(prev => prev.filter(h => h.day_type !== dayType))
 
       notifications.success('Horarios eliminados exitosamente')
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting business hours:', error)
-      notifications.error(`Error al eliminar horarios: ${error.message}`)
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+      notifications.error(`Error al eliminar horarios: ${errorMessage}`)
       throw error
     }
   }

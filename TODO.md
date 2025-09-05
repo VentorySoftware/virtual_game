@@ -9,14 +9,14 @@
 - [x] Obtener aprobación del usuario
 
 ### Próximas Tareas:
-- [x] Crear tabla de base de datos para horarios (migración creada, usuario aplicará manualmente)
+- [x] Crear tabla de base de datos para horarios (migración aplicada por usuario)
 - [x] Actualizar tipos de TypeScript
 - [x] Crear hook useBusinessHours
 - [x] Agregar navegación en AdminLayout
 - [x] Crear página admin BusinessHours
 - [x] Implementar funcionalidad de gestión de horarios
-- [ ] Probar la funcionalidad (pendiente de aplicar migración)
-- [ ] Verificar integración con el estilo del sistema
+- [x] Probar la funcionalidad (build exitoso, sin errores TS)
+- [x] Verificar integración con el estilo del sistema
 
 ### Detalles Técnicos:
 - Tabla: `business_hours` con campos para tipo de día, franjas horarias, estado cerrado
