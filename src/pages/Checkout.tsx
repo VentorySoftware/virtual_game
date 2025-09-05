@@ -72,7 +72,7 @@ const Checkout = () => {
       order_number: `VG${Date.now()}`,
       subtotal: totalPrice,
       total: totalPrice,
-      status: 'verifying' as const,
+      status: 'pending' as const,
       billing_info: {
         email: formData.email,
         firstName: formData.firstName,

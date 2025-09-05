@@ -884,7 +884,13 @@ export type Database = {
       }
     }
     Enums: {
-      order_status: "draft" | "paid" | "verifying" | "delivered" | "cancelled"
+      order_status:
+        | "draft"
+        | "paid"
+        | "verifying"
+        | "delivered"
+        | "cancelled"
+        | "pending"
       payment_method: "mercadopago" | "paypal" | "bank_transfer"
       platform_type:
         | "PC"
@@ -1032,7 +1038,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      order_status: ["draft", "paid", "verifying", "delivered", "cancelled"],
+      order_status: [
+        "draft",
+        "paid",
+        "verifying",
+        "delivered",
+        "cancelled",
+        "pending",
+      ],
       payment_method: ["mercadopago", "paypal", "bank_transfer"],
       platform_type: [
         "PC",
