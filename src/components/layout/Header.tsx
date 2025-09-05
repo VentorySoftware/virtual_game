@@ -129,12 +129,10 @@ const Header = () => {
                   <User className="mr-2 h-4 w-4" />
                   Mi Perfil
                 </DropdownMenuItem>
-                {isAdmin && (
-                  <DropdownMenuItem onClick={() => navigate("/admin")}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Panel Admin
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem onClick={() => navigate("/admin")}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Panel Admin {!isAdmin && "(Dev)"}
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Cerrar Sesión
