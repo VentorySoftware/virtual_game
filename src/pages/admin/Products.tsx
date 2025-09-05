@@ -25,8 +25,8 @@ const ProductsAdmin = () => {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  const [categoryFilter, setCategoryFilter] = useState("")
-  const [visibilityFilter, setVisibilityFilter] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState("all")
+  const [visibilityFilter, setVisibilityFilter] = useState("all")
   const [showCreateProduct, setShowCreateProduct] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
   const [platforms, setPlatforms] = useState<any[]>([])
@@ -318,11 +318,11 @@ const ProductsAdmin = () => {
       (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase()))
     
     // Filtro por categoría
-    const matchesCategory = categoryFilter === "" || 
+    const matchesCategory = categoryFilter === "all" || 
       product.category?.id === categoryFilter
     
     // Filtro por visibilidad
-    const matchesVisibility = visibilityFilter === "" ||
+    const matchesVisibility = visibilityFilter === "all" ||
       (visibilityFilter === "active" && product.is_active) ||
       (visibilityFilter === "inactive" && !product.is_active)
     
@@ -331,8 +331,8 @@ const ProductsAdmin = () => {
 
   const clearFilters = () => {
     setSearchTerm("")
-    setCategoryFilter("")
-    setVisibilityFilter("")
+    setCategoryFilter("all")
+    setVisibilityFilter("all")
   }
 
   if (loading) {
@@ -647,7 +647,7 @@ const ProductsAdmin = () => {
                       <SelectValue placeholder="Todas las categorías" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todas las categorías</SelectItem>
+                      <SelectItem value="all">Todas las categorías</SelectItem>
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}
@@ -665,7 +665,7 @@ const ProductsAdmin = () => {
                       <SelectValue placeholder="Todos los estados" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos los estados</SelectItem>
+                      <SelectItem value="all">Todos los estados</SelectItem>
                       <SelectItem value="active">Activos</SelectItem>
                       <SelectItem value="inactive">Inactivos</SelectItem>
                     </SelectContent>
@@ -685,7 +685,7 @@ const ProductsAdmin = () => {
               </div>
 
               {/* Active Filters Summary */}
-              {(searchTerm || categoryFilter || visibilityFilter) && (
+              {(searchTerm || categoryFilter !== "all" || visibilityFilter !== "all") && (
                 <div className="flex flex-wrap gap-2 pt-2">
                   {searchTerm && (
                     <Badge variant="secondary" className="flex items-center gap-1">
@@ -698,22 +698,22 @@ const ProductsAdmin = () => {
                       </button>
                     </Badge>
                   )}
-                  {categoryFilter && (
+                  {categoryFilter !== "all" && (
                     <Badge variant="secondary" className="flex items-center gap-1">
                       Categoría: {categories.find(c => c.id === categoryFilter)?.name}
                       <button 
-                        onClick={() => setCategoryFilter("")}
+                        onClick={() => setCategoryFilter("all")}
                         className="ml-1 hover:text-destructive"
                       >
                         ×
                       </button>
                     </Badge>
                   )}
-                  {visibilityFilter && (
+                  {visibilityFilter !== "all" && (
                     <Badge variant="secondary" className="flex items-center gap-1">
                       Estado: {visibilityFilter === 'active' ? 'Activos' : 'Inactivos'}
                       <button 
-                        onClick={() => setVisibilityFilter("")}
+                        onClick={() => setVisibilityFilter("all")}
                         className="ml-1 hover:text-destructive"
                       >
                         ×
@@ -733,18 +733,18 @@ const ProductsAdmin = () => {
               <Package className="h-16 w-16 text-muted-foreground" />
               <div className="text-center">
                 <h3 className="text-lg font-semibold mb-2">
-                  {(searchTerm || categoryFilter || visibilityFilter) 
+                  {(searchTerm || categoryFilter !== "all" || visibilityFilter !== "all") 
                     ? 'No se encontraron productos con los filtros aplicados' 
                     : 'No hay productos disponibles'
                   }
                 </h3>
                 <p className="text-muted-foreground">
-                  {(searchTerm || categoryFilter || visibilityFilter) 
+                  {(searchTerm || categoryFilter !== "all" || visibilityFilter !== "all") 
                     ? 'Intenta ajustar los filtros o crear un nuevo producto'
                     : 'Comienza agregando tu primer producto'
                   }
                 </p>
-                {(searchTerm || categoryFilter || visibilityFilter) && (
+                {(searchTerm || categoryFilter !== "all" || visibilityFilter !== "all") && (
                   <CyberButton 
                     variant="outline" 
                     className="mt-3"
