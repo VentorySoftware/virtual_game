@@ -2,28 +2,17 @@ import { Badge } from "@/components/ui/badge"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Star, ShoppingCart, Eye } from "lucide-react"
-
-interface Product {
-  id: string
-  title: string
-  platform: string
-  originalPrice: number
-  price: number
-  discount?: number
-  rating: number
-  image: string
-  isPreOrder?: boolean
-  releaseDate?: string
-}
+import type { Product } from "@/types/database"
 
 interface ProductCardProps {
   product: Product
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
-  const discountPercentage = product.originalPrice > product.price 
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-    : 0
+  const discountPercentage = product.discount_percentage || 0
+  const isPreOrder = product.type === 'preorder'
+  const platformName = product.platform?.name || 'Multi'
+  const releaseDate = product.preorder_date ? new Date(product.preorder_date).toLocaleDateString('es-AR') : null
 
   return (
     <Card className="cyber-card group hover:shadow-glow-primary transition-all duration-300 transform hover:-translate-y-1">
@@ -31,14 +20,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
         {/* Image */}
         <div className="relative overflow-hidden rounded-t-lg">
           <img 
-            src={product.image} 
+            src={product.image_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=300&fit=crop'} 
             alt={product.title}
             className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
           />
           
           {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {product.isPreOrder && (
+            {isPreOrder && (
               <Badge className="bg-accent text-accent-foreground animate-pulse">
                 Pre-orden
               </Badge>
@@ -55,7 +44,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
             variant="outline" 
             className="absolute top-2 right-2 bg-background/80 border-primary/30"
           >
-            {product.platform}
+            {platformName}
           </Badge>
 
           {/* Hover overlay */}
@@ -103,15 +92,15 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 <span className="text-lg font-bold text-primary font-orbitron">
                   ${product.price.toLocaleString('es-AR')}
                 </span>
-                {product.originalPrice > product.price && (
+                {product.original_price && product.original_price > product.price && (
                   <span className="text-sm text-muted-foreground line-through">
-                    ${product.originalPrice.toLocaleString('es-AR')}
+                    ${product.original_price.toLocaleString('es-AR')}
                   </span>
                 )}
               </div>
-              {product.isPreOrder && product.releaseDate && (
+              {isPreOrder && releaseDate && (
                 <div className="text-xs text-secondary">
-                  Lanzamiento: {product.releaseDate}
+                  Lanzamiento: {releaseDate}
                 </div>
               )}
             </div>
@@ -133,7 +122,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
           size="sm"
         >
           <ShoppingCart className="w-4 h-4 mr-1" />
-          {product.isPreOrder ? 'Pre-ordenar' : 'Comprar'}
+          {isPreOrder ? 'Pre-ordenar' : 'Comprar'}
         </CyberButton>
       </CardFooter>
     </Card>
