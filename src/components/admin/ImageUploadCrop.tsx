@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { Canvas as FabricCanvas, FabricImage } from "fabric"
 import { Upload, RotateCw, ZoomIn, ZoomOut, Save, X, Image as ImageIcon } from "lucide-react"
 import { CyberButton } from "@/components/ui/cyber-button"
@@ -28,12 +28,29 @@ export const ImageUploadCrop = ({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Cleanup effect for canvas disposal
+  useEffect(() => {
+    return () => {
+      if (fabricCanvas) {
+        try {
+          fabricCanvas.dispose()
+        } catch (error) {
+          console.warn('Canvas disposal error:', error)
+        }
+      }
+    }
+  }, [fabricCanvas])
+
   const initializeCanvas = useCallback((imageElement: HTMLImageElement) => {
     if (!canvasRef.current) return
 
-    // Dispose existing canvas
+    // Dispose existing canvas safely
     if (fabricCanvas) {
-      fabricCanvas.dispose()
+      try {
+        fabricCanvas.dispose()
+      } catch (error) {
+        console.warn('Canvas disposal error:', error)
+      }
     }
 
     const canvas = new FabricCanvas(canvasRef.current, {
@@ -44,6 +61,9 @@ export const ImageUploadCrop = ({
 
     // Create fabric image and add to canvas
     FabricImage.fromURL(imageElement.src).then((fabricImg) => {
+      // Check if canvas still exists before proceeding
+      if (!canvas || canvas.disposed) return
+      
       // Scale image to fit canvas while maintaining aspect ratio
       const canvasWidth = canvas.getWidth()
       const canvasHeight = canvas.getHeight()
@@ -65,10 +85,12 @@ export const ImageUploadCrop = ({
       canvas.add(fabricImg)
       canvas.setActiveObject(fabricImg)
       canvas.renderAll()
+    }).catch(error => {
+      console.warn('Image loading error:', error)
     })
 
     setFabricCanvas(canvas)
-  }, [fabricCanvas])
+  }, [])
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -91,7 +113,7 @@ export const ImageUploadCrop = ({
   }
 
   const handleRotate = () => {
-    if (!fabricCanvas) return
+    if (!fabricCanvas || fabricCanvas.disposed) return
     const activeObject = fabricCanvas.getActiveObject()
     if (activeObject) {
       activeObject.rotate((activeObject.angle || 0) + 90)
@@ -100,7 +122,7 @@ export const ImageUploadCrop = ({
   }
 
   const handleZoomIn = () => {
-    if (!fabricCanvas) return
+    if (!fabricCanvas || fabricCanvas.disposed) return
     const activeObject = fabricCanvas.getActiveObject()
     if (activeObject) {
       const currentScale = activeObject.scaleX || 1
@@ -110,7 +132,7 @@ export const ImageUploadCrop = ({
   }
 
   const handleZoomOut = () => {
-    if (!fabricCanvas) return
+    if (!fabricCanvas || fabricCanvas.disposed) return
     const activeObject = fabricCanvas.getActiveObject()
     if (activeObject) {
       const currentScale = activeObject.scaleX || 1
@@ -120,7 +142,7 @@ export const ImageUploadCrop = ({
   }
 
   const handleSave = async () => {
-    if (!fabricCanvas || !selectedFile) return
+    if (!fabricCanvas || !selectedFile || fabricCanvas.disposed) return
 
     setIsLoading(true)
     
