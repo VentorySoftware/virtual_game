@@ -1,10 +1,10 @@
 import { useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingCart, 
-  Users, 
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  Users,
   Settings,
   FolderTree,
   Megaphone,
@@ -13,7 +13,8 @@ import {
   LogOut,
   Gamepad2,
   Home,
-  CreditCard
+  CreditCard,
+  Clock
 } from "lucide-react"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { useAuth } from "@/contexts/AuthContext"
@@ -36,6 +37,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { name: 'Medios de Pago', href: '/admin/payment-methods', icon: CreditCard },
     { name: 'Pedidos', href: '/admin/orders', icon: ShoppingCart },
     { name: 'Usuarios', href: '/admin/users', icon: Users },
+    { name: 'Horarios', href: '/admin/business-hours', icon: Clock },
     { name: 'Configuración', href: '/admin/settings', icon: Settings },
   ]
 

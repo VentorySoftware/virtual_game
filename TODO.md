@@ -1,8 +1,25 @@
-# Reorganización del Footer
+# TODO: Implementar Módulo de Horarios de Atención
 
-## Tareas Completadas
-- [x] Cambiar el grid del footer a 4 columnas en lg:grid-cols-4
-- [x] Mover la sección "Beneficios" a la columna 3 (junto a "Navegación")
-- [x] Mover la card "Horarios de Atención" a la columna 4 (lado derecho de "Beneficios")
-- [x] Ajustar responsive para md:grid-cols-2 si es necesario
-- [x] Verificar que no se rompa el layout en diferentes tamaños de pantalla
+## Estado: Completado
+
+### Tareas Completadas:
+- [x] Analizar estructura del proyecto
+- [x] Revisar base de datos existente
+- [x] Crear plan de implementación
+- [x] Obtener aprobación del usuario
+
+### Próximas Tareas:
+- [x] Crear tabla de base de datos para horarios (migración creada, usuario aplicará manualmente)
+- [x] Actualizar tipos de TypeScript
+- [x] Crear hook useBusinessHours
+- [x] Agregar navegación en AdminLayout
+- [x] Crear página admin BusinessHours
+- [x] Implementar funcionalidad de gestión de horarios
+- [ ] Probar la funcionalidad (pendiente de aplicar migración)
+- [ ] Verificar integración con el estilo del sistema
+
+### Detalles Técnicos:
+- Tabla: `business_hours` con campos para tipo de día, franjas horarias, estado cerrado
+- Página: `/admin/business-hours` siguiendo el patrón de Settings.tsx
+- Estilo: Mantener consistencia con el tema cyber del sistema
+- Componentes: Usar CyberButton, Card, Tabs, etc.
