@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react"
 import { Navigate } from "react-router-dom"
-import { Search, UserCheck, UserX, Crown, Shield } from "lucide-react"
+import { Search, UserCheck, UserX, Crown, Shield, UserPlus, Ban } from "lucide-react"
 import AdminLayout from "@/components/admin/AdminLayout"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth } from "@/contexts/AuthContext"
@@ -14,6 +15,7 @@ interface User {
   id: string
   email: string
   created_at: string
+  is_active?: boolean
   profiles?: {
     first_name: string
     last_name: string
@@ -30,6 +32,8 @@ const UsersAdmin = () => {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
+  const [showCreateUser, setShowCreateUser] = useState(false)
+  const [newUser, setNewUser] = useState({ email: '', password: '', firstName: '', lastName: '' })
 
   useEffect(() => {
     if (user) {
@@ -60,30 +64,42 @@ const UsersAdmin = () => {
 
   const fetchUsers = async () => {
     try {
-      // Get users from auth metadata (simplified approach)
-      const { data: profilesData, error } = await supabase
+      // Primero obtener todos los profiles
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          user_roles(role)
-        `)
+        .select('user_id, email, first_name, last_name, phone, created_at')
         .order('created_at', { ascending: false })
 
-      if (error) throw error
-      
-      // Convert profiles to user format
-      const usersData: User[] = profilesData?.map(profile => ({
-        id: profile.user_id,
-        email: profile.email,
-        created_at: profile.created_at,
-        profiles: profile.first_name || profile.last_name || profile.phone ? {
-          first_name: profile.first_name,
-          last_name: profile.last_name,
-          phone: profile.phone,
-        } : null,
-        user_roles: Array.isArray(profile.user_roles) ? profile.user_roles : []
-      })) || []
+      if (profilesError) throw profilesError
 
+      // Luego obtener todos los roles de usuario
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+
+      if (rolesError) throw rolesError
+
+      console.log('Profiles data:', profilesData)
+      console.log('Roles data:', rolesData)
+      
+      // Combinar los datos
+      const usersData: User[] = profilesData?.map(profile => {
+        const userRoles = rolesData?.filter(role => role.user_id === profile.user_id) || []
+        
+        return {
+          id: profile.user_id,
+          email: profile.email || 'No email',
+          created_at: profile.created_at,
+          profiles: {
+            first_name: profile.first_name || '',
+            last_name: profile.last_name || '',
+            phone: profile.phone || '',
+          },
+          user_roles: userRoles
+        }
+      }) || []
+
+      console.log('Final users data:', usersData)
       setUsers(usersData)
     } catch (error) {
       console.error('Error fetching users:', error)
@@ -115,6 +131,47 @@ const UsersAdmin = () => {
     } catch (error) {
       console.error('Error updating user role:', error)
       alert('Error al actualizar el rol del usuario')
+    }
+  }
+
+  const createUser = async () => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: newUser.email,
+        password: newUser.password,
+        options: {
+          data: {
+            first_name: newUser.firstName,
+            last_name: newUser.lastName,
+          }
+        }
+      })
+
+      if (error) throw error
+
+      setShowCreateUser(false)
+      setNewUser({ email: '', password: '', firstName: '', lastName: '' })
+      
+      // Recargar usuarios después de crear
+      setTimeout(() => {
+        fetchUsers()
+      }, 1000)
+      
+      alert('Usuario creado exitosamente')
+    } catch (error: any) {
+      console.error('Error creating user:', error)
+      alert(`Error al crear usuario: ${error.message}`)
+    }
+  }
+
+  const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
+    try {
+      // Aquí podrías implementar lógica para activar/desactivar usuarios
+      // Por ejemplo, agregar un campo is_active en profiles o usar auth admin
+      alert(`Funcionalidad de ${currentStatus ? 'desactivar' : 'activar'} usuario pendiente de implementar`)
+    } catch (error) {
+      console.error('Error toggling user status:', error)
+      alert('Error al cambiar el estado del usuario')
     }
   }
 
@@ -156,14 +213,88 @@ const UsersAdmin = () => {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold font-orbitron neon-text">
-            Gestión de Usuarios
-          </h1>
-          <p className="text-muted-foreground">
-            Administra usuarios y roles del sistema
-          </p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold font-orbitron neon-text">
+              Gestión de Usuarios
+            </h1>
+            <p className="text-muted-foreground">
+              Administra usuarios y roles del sistema
+            </p>
+          </div>
+          <CyberButton
+            onClick={() => setShowCreateUser(true)}
+            className="flex items-center gap-2"
+          >
+            <UserPlus className="h-4 w-4" />
+            Crear Usuario
+          </CyberButton>
         </div>
+
+        {/* Create User Modal */}
+        {showCreateUser && (
+          <Card className="cyber-card">
+            <CardHeader>
+              <CardTitle>Crear Nuevo Usuario</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="firstName">Nombre</Label>
+                  <Input
+                    id="firstName"
+                    value={newUser.firstName}
+                    onChange={(e) => setNewUser({...newUser, firstName: e.target.value})}
+                    className="cyber-border"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="lastName">Apellido</Label>
+                  <Input
+                    id="lastName"
+                    value={newUser.lastName}
+                    onChange={(e) => setNewUser({...newUser, lastName: e.target.value})}
+                    className="cyber-border"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                  className="cyber-border"
+                />
+              </div>
+              <div>
+                <Label htmlFor="password">Contraseña Temporal</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                  className="cyber-border"
+                />
+              </div>
+              <div className="flex gap-2">
+                <CyberButton onClick={createUser} disabled={!newUser.email || !newUser.password}>
+                  Crear Usuario
+                </CyberButton>
+                <CyberButton 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowCreateUser(false)
+                    setNewUser({ email: '', password: '', firstName: '', lastName: '' })
+                  }}
+                >
+                  Cancelar
+                </CyberButton>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Search */}
         <Card className="cyber-card">
