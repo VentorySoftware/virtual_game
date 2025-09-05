@@ -1,12 +1,22 @@
 import { useState } from "react"
-import { Link, useLocation } from "react-router-dom"
-import { Search, ShoppingCart, User, Menu, X, Gamepad2 } from "lucide-react"
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { Search, ShoppingCart, User, Menu, X, Gamepad2, LogOut } from "lucide-react"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Input } from "@/components/ui/input"
+import { useAuth } from "@/contexts/AuthContext"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user, signOut } = useAuth()
 
   const navigation = [
     { name: "Inicio", href: "/" },
@@ -18,6 +28,11 @@ const Header = () => {
 
   const isActive = (href: string) => {
     return location.pathname === href
+  }
+
+  const handleSignOut = async () => {
+    await signOut()
+    navigate("/")
   }
 
   return (
@@ -76,9 +91,37 @@ const Header = () => {
 
         {/* Actions */}
         <div className="flex items-center space-x-4">
-          <CyberButton variant="ghost" size="icon">
-            <User className="h-5 w-5" />
-          </CyberButton>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <CyberButton variant="ghost" size="icon">
+                  <User className="h-5 w-5" />
+                </CyberButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 cyber-card border-primary/20">
+                <DropdownMenuItem className="font-medium">
+                  {user.email}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/profile")}>
+                  <User className="mr-2 h-4 w-4" />
+                  Mi Perfil
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Cerrar Sesión
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <CyberButton 
+              variant="ghost" 
+              size="sm"
+              onClick={() => navigate("/auth")}
+            >
+              Iniciar Sesión
+            </CyberButton>
+          )}
           
           <CyberButton variant="ghost" size="icon" className="relative">
             <ShoppingCart className="h-5 w-5" />
