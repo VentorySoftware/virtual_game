@@ -2,11 +2,14 @@ import { useState } from "react"
 import { MessageCircle, X, Send } from "lucide-react"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useSiteSettings } from "@/hooks/useSiteSettings"
 
 const WhatsAppWidget = () => {
   const [isOpen, setIsOpen] = useState(false)
+  const { settings } = useSiteSettings()
   
-  const whatsappNumber = "5411123456789" // Replace with actual number
+  // Use the WhatsApp number from settings, fallback to default if not configured
+  const whatsappNumber = settings.whatsapp_number || "5411123456789"
   
   const quickMessages = [
     "¡Hola! Quiero información sobre ofertas",
