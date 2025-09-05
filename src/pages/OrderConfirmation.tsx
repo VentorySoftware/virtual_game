@@ -1,18 +1,21 @@
 import { useEffect, useState } from "react"
-import { useParams, Navigate, Link } from "react-router-dom"
-import { CheckCircle, Package, Mail, Phone, MapPin, Calendar } from "lucide-react"
+import { useParams, Navigate, Link, useSearchParams } from "react-router-dom"
+import { CheckCircle, Package, Mail, Phone, MapPin, Calendar, Download, RefreshCw } from "lucide-react"
 import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { useToast } from "@/hooks/use-toast"
 
 interface Order {
   id: string
   order_number: string
   total: number
   status: string
+  payment_status: string
   created_at: string
   billing_info: any
   customer_notes: string
@@ -21,21 +24,66 @@ interface Order {
     product_name: string
     quantity: number
     price: number
+    digital_content: string | null
   }>
 }
 
 const OrderConfirmation = () => {
   const { orderNumber } = useParams()
+  const [searchParams] = useSearchParams()
+  const sessionId = searchParams.get('session_id')
   const { user } = useAuth()
+  const { toast } = useToast()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [verifyingPayment, setVerifyingPayment] = useState(false)
 
   useEffect(() => {
     if (orderNumber) {
       fetchOrder()
+      // If there's a session_id, verify payment
+      if (sessionId) {
+        verifyPayment()
+      }
     }
-  }, [orderNumber])
+  }, [orderNumber, sessionId])
+
+  const verifyPayment = async () => {
+    setVerifyingPayment(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-payment', {
+        body: { sessionId, orderNumber }
+      })
+
+      if (error) throw error
+
+      if (data.paid) {
+        toast({
+          title: "¡Pago confirmado!",
+          description: "Tu pedido ha sido procesado exitosamente.",
+        })
+      }
+
+      // Refresh order data after payment verification
+      await fetchOrder()
+    } catch (error) {
+      console.error('Error verifying payment:', error)
+      toast({
+        title: "Error",
+        description: "No se pudo verificar el pago. Intenta refrescar la página.",
+        variant: "destructive",
+      })
+    } finally {
+      setVerifyingPayment(false)
+    }
+  }
+
+  const handleVerifyPayment = async () => {
+    if (orderNumber) {
+      await verifyPayment()
+    }
+  }
 
   const fetchOrder = async () => {
     try {
@@ -115,14 +163,34 @@ const OrderConfirmation = () => {
           {/* Success Header */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
-              <CheckCircle className="h-16 w-16 text-green-500 animate-cyber-pulse" />
+              <CheckCircle className={`h-16 w-16 ${
+                order.status === 'paid' ? 'text-green-500' : 'text-yellow-500'
+              } animate-cyber-pulse`} />
             </div>
             <h1 className="text-3xl font-bold font-orbitron neon-text mb-2">
-              ¡Pedido Confirmado!
+              {order.status === 'paid' ? '¡Pago Confirmado!' : '¡Pedido Creado!'}
             </h1>
             <p className="text-muted-foreground">
-              Tu pedido ha sido procesado correctamente
+              {order.status === 'paid' 
+                ? 'Tu compra ha sido procesada exitosamente'
+                : 'Tu pedido está pendiente de pago'
+              }
             </p>
+            
+            {/* Payment verification button */}
+            {order.status !== 'paid' && (
+              <div className="mt-4">
+                <CyberButton 
+                  onClick={handleVerifyPayment}
+                  disabled={verifyingPayment}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${verifyingPayment ? 'animate-spin' : ''}`} />
+                  {verifyingPayment ? 'Verificando...' : 'Verificar Pago'}
+                </CyberButton>
+              </div>
+            )}
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8">
@@ -141,6 +209,32 @@ const OrderConfirmation = () => {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Número de Pedido:</span>
                   <span className="font-mono">{order.order_number}</span>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Estado:</span>
+                  <div className="flex items-center gap-2">
+                    {order.status === 'paid' ? (
+                      <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                        Pagado
+                      </Badge>
+                    ) : order.status === 'pending' ? (
+                      <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                        Pendiente
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">
+                        {order.status === 'draft' ? 'Borrador' : order.status}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Pago:</span>
+                  <span className={order.payment_status === 'paid' ? 'text-green-400' : 'text-yellow-400'}>
+                    {order.payment_status === 'paid' ? 'Confirmado' : 'Pendiente'}
+                  </span>
                 </div>
                 
                 <div className="flex justify-between">
@@ -164,12 +258,38 @@ const OrderConfirmation = () => {
                 </h3>
                 <div className="space-y-3">
                   {order.order_items.map((item) => (
-                    <div key={item.id} className="flex justify-between items-center py-2 border-b border-primary/10">
-                      <div>
+                    <div key={item.id} className="flex justify-between items-start py-2 border-b border-primary/10">
+                      <div className="flex-1">
                         <p className="font-medium">{item.product_name}</p>
                         <p className="text-sm text-muted-foreground">
                           Cantidad: {item.quantity}
                         </p>
+                        {/* Digital Content */}
+                        {item.digital_content && order.status === 'paid' && (
+                          <div className="mt-2 p-2 bg-green-500/10 border border-green-500/30 rounded">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Download className="h-4 w-4 text-green-400" />
+                              <span className="text-sm font-medium text-green-400">Contenido Digital</span>
+                            </div>
+                            {(() => {
+                              try {
+                                const content = JSON.parse(item.digital_content)
+                                return (
+                                  <div className="text-sm space-y-1">
+                                    <p className="font-mono text-xs bg-background/50 p-1 rounded">
+                                      Código: {content.digital_code}
+                                    </p>
+                                    <p className="text-muted-foreground text-xs">
+                                      {content.instructions}
+                                    </p>
+                                  </div>
+                                )
+                              } catch {
+                                return <p className="text-sm text-muted-foreground">Código disponible</p>
+                              }
+                            })()}
+                          </div>
+                        )}
                       </div>
                       <span className="font-bold">
                         {formatPrice(Number(item.price) * item.quantity)}

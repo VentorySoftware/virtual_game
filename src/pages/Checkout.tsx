@@ -110,16 +110,29 @@ const Checkout = () => {
 
       if (itemsError) throw itemsError
 
-      // Clear cart after successful order
-      await clearCart()
-
-      toast({
-        title: "Pedido creado exitosamente",
-        description: `Número de pedido: ${order.order_number}`,
+      // Create Stripe payment session
+      const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment', {
+        body: { orderId: order.id }
       })
 
-      // Redirect to order confirmation
-      navigate(`/order-confirmation/${order.order_number}`)
+      if (paymentError) throw paymentError
+      if (!paymentData?.url) throw new Error('No payment URL received')
+
+      // Open Stripe checkout in a new tab
+      window.open(paymentData.url, '_blank')
+
+      toast({
+        title: "Redirigiendo al pago",
+        description: `Pedido ${order.order_number} creado. Completá el pago en la nueva ventana.`,
+      })
+
+      // Clear cart after successful order creation
+      await clearCart()
+
+      // Redirect to order confirmation after a short delay
+      setTimeout(() => {
+        navigate(`/order-confirmation/${order.order_number}`)
+      }, 2000)
       
     } catch (error) {
       console.error('Error creating order:', error)
@@ -265,14 +278,14 @@ const Checkout = () => {
                   />
                 </div>
 
-                <CyberButton
-                  type="submit"
-                  className="w-full"
-                  size="lg"
-                  disabled={loading}
-                >
-                  {loading ? "Procesando..." : "Crear Pedido"}
-                </CyberButton>
+              <CyberButton
+                type="submit"
+                className="w-full"
+                size="lg"
+                disabled={loading}
+              >
+                {loading ? "Creando pedido..." : "Proceder al Pago"}
+              </CyberButton>
               </form>
             </div>
 
