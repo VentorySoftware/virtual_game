@@ -6,9 +6,11 @@ import ProductCard from "@/components/products/ProductCard"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Flame, Zap, Timer, TrendingDown } from "lucide-react"
+import { useSiteSettings } from "@/hooks/useSiteSettings"
 
 const Deals = () => {
   const { products, loading } = useProducts()
+  const { settings } = useSiteSettings()
 
   // Filter products with discounts
   const dealsProducts = useMemo(() => {
@@ -184,9 +186,9 @@ const Deals = () => {
                 <button className="px-6 py-3 bg-white/10 border border-white/30 text-white rounded-lg hover:bg-white/20 transition-colors">
                   🔔 Notificarme de Ofertas
                 </button>
-                <button 
+                <button
                   className="px-6 py-3 bg-white/10 border border-white/30 text-white rounded-lg hover:bg-white/20 transition-colors"
-                  onClick={() => window.open('https://wa.me/5411123456789?text=Hola! Quiero estar al tanto de las ofertas especiales.', '_blank')}
+                  onClick={() => window.open(`https://wa.me/${settings.whatsapp_number || '5411123456789'}?text=Hola! Quiero estar al tanto de las ofertas especiales.`, '_blank')}
                 >
                   📱 WhatsApp VIP
                 </button>

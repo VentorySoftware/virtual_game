@@ -5,9 +5,11 @@ import { Badge } from "@/components/ui/badge"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Package, Star, ShoppingCart, ArrowRight, Gift } from "lucide-react"
+import { useSiteSettings } from "@/hooks/useSiteSettings"
 
 const Bundles = () => {
   const { bundles, loading } = useBundles()
+  const { settings } = useSiteSettings()
 
   if (loading) {
     return (
@@ -235,10 +237,10 @@ const Bundles = () => {
                 Contáctanos por WhatsApp y armaremos un pack personalizado 
                 con los juegos que más te interesan al mejor precio.
               </p>
-              <CyberButton 
-                variant="outline" 
+              <CyberButton
+                variant="outline"
                 className="bg-white/10 border-white/30 text-white hover:bg-white hover:text-black"
-                onClick={() => window.open('https://wa.me/5411123456789?text=Hola! Me interesa armar un pack personalizado de juegos.', '_blank')}
+                onClick={() => window.open(`https://wa.me/${settings.whatsapp_number || '5411123456789'}?text=Hola! Me interesa armar un pack personalizado de juegos.`, '_blank')}
               >
                 Contactar por WhatsApp
               </CyberButton>

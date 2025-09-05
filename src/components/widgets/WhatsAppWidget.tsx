@@ -5,9 +5,20 @@ const WhatsAppWidget = () => {
   const { settings } = useSiteSettings()
   
   // Use the WhatsApp number from settings, fallback to default if not configured
-  const whatsappNumber = settings.whatsapp_number || "5411123456789"
+  // Fix: Remove fallback default number to avoid always using it if settings is not loaded yet
+  // Use the WhatsApp number from settings, fallback to empty string to avoid undefined
+  let whatsappNumber = settings.whatsapp_number || ''
+
+  // Remove leading '+' if present for WhatsApp URL format
+  if (whatsappNumber.startsWith('+')) {
+    whatsappNumber = whatsappNumber.substring(1)
+  }
 
   const openWhatsApp = () => {
+    if (!whatsappNumber) {
+      alert("El número de WhatsApp no está configurado en el panel de administración.")
+      return
+    }
     const message = "¡Hola! Necesito ayuda con VirtualGame"
     const encodedMessage = encodeURIComponent(message)
     window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, '_blank')

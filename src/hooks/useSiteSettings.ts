@@ -23,11 +23,12 @@ export const useSiteSettings = () => {
     try {
       const { data, error } = await supabase
         .from('site_settings')
-        .select('*')
+        .select('key, value')
 
       if (error) throw error
       
       // Convert array of settings to object
+      
       const settingsObj: Partial<SiteSettings> = {}
       
       data?.forEach((setting: any) => {

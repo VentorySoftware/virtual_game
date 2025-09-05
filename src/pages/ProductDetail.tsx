@@ -8,17 +8,18 @@ import { Badge } from "@/components/ui/badge"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { 
-  Star, 
-  ShoppingCart, 
-  Heart, 
-  Share2, 
-  Clock, 
-  Shield, 
+import {
+  Star,
+  ShoppingCart,
+  Heart,
+  Share2,
+  Clock,
+  Shield,
   Zap,
   ArrowLeft,
   MessageCircle
 } from "lucide-react"
+import { useSiteSettings } from "@/hooks/useSiteSettings"
 
 const ProductDetail = () => {
   const { slug } = useParams()
@@ -95,15 +96,27 @@ const ProductDetail = () => {
   const isPreOrder = product.type === 'preorder'
   const platformName = product.platform?.name || 'Multi'
   const categoryName = product.category?.name || 'General'
-  
+
   const images = [
     product.image_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&h=600&fit=crop',
     'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop',
     'https://images.unsplash.com/photo-1614728263952-84ea256f9679?w=800&h=600&fit=crop'
   ]
 
+  // ...
+  const { settings } = useSiteSettings()
+
   const whatsappMessage = `Hola! Me interesa el juego *${product.title}* (${platformName}) por $${product.price.toLocaleString('es-AR')}. ¿Podrían darme más información?`
-  const whatsappUrl = `https://wa.me/5411123456789?text=${encodeURIComponent(whatsappMessage)}`
+  let whatsappNumber = settings.whatsapp_number || ''
+
+  // Remove leading '+' if present for WhatsApp URL format
+  if (whatsappNumber.startsWith('+')) {
+    whatsappNumber = whatsappNumber.substring(1)
+  }
+
+  const whatsappUrl = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`
+    : undefined
 
   return (
     <div className="min-h-screen bg-gradient-dark">

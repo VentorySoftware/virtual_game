@@ -166,9 +166,23 @@ const OrderConfirmation = () => {
   const handleNotifyWhatsApp = () => {
     if (!order) return
     
-    const whatsappNumber = settings.whatsapp_number || "5411123456789"
+    let whatsappNumber = settings.whatsapp_number || ''
     const message = generateWhatsAppMessage(order)
     const encodedMessage = encodeURIComponent(message)
+
+    // Remove leading '+' if present for WhatsApp URL format
+    if (whatsappNumber.startsWith('+')) {
+      whatsappNumber = whatsappNumber.substring(1)
+    }
+    
+    if (!whatsappNumber) {
+      toast({
+        title: "Número de WhatsApp no configurado",
+        description: "Por favor, configure el número de WhatsApp en el panel de administración.",
+        variant: "destructive",
+      })
+      return
+    }
     
     window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, '_blank')
     
