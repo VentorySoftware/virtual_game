@@ -18,9 +18,9 @@ const Footer = () => {
       <div className="absolute inset-0 grid-pattern opacity-10" />
       
       <div className="container py-16 relative">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           
-          {/* Company Info */}
+          {/* Company Info */}  
           <div className="space-y-6">
             <div className="flex items-center space-x-2">
               <Gamepad2 className="h-8 w-8 text-primary animate-cyber-pulse" />
@@ -70,7 +70,7 @@ const Footer = () => {
           <div className="space-y-6">
             <h3 className="text-lg font-semibold font-orbitron text-primary">Navegación</h3>
             <ul className="space-y-3 text-sm">
-              {[
+              {[  
                 { name: "Inicio", href: "/" },
                 { name: "Todas las Categorías", href: "/categories" },
                 { name: "Pre-órdenes", href: "/pre-orders" },
@@ -90,7 +90,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Newsletter & Benefits */}
+          {/* Benefits */}
           <div className="space-y-6">
             <h3 className="text-lg font-semibold font-orbitron text-accent">Beneficios</h3>
             
@@ -112,7 +112,10 @@ const Footer = () => {
                 <span className="text-sm text-muted-foreground">Mejores precios</span>
               </div>
             </div>
+          </div>
 
+          {/* Horarios de Atención */}
+          <div className="space-y-6">
             <div className="cyber-card p-4">
               <h4 className="font-semibold mb-2 text-primary">Horarios de Atención</h4>
               <div className="space-y-1 text-sm text-muted-foreground">
