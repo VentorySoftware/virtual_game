@@ -1,10 +1,12 @@
 import { useState } from "react"
+import { Link, useLocation } from "react-router-dom"
 import { Search, ShoppingCart, User, Menu, X, Gamepad2 } from "lucide-react"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Input } from "@/components/ui/input"
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const location = useLocation()
 
   const navigation = [
     { name: "Inicio", href: "/" },
@@ -13,6 +15,10 @@ const Header = () => {
     { name: "Packs", href: "/packs" },
     { name: "Ofertas", href: "/deals" },
   ]
+
+  const isActive = (href: string) => {
+    return location.pathname === href
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-primary/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -33,12 +39,12 @@ const Header = () => {
       {/* Main header */}
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
-        <div className="flex items-center space-x-2">
+        <Link to="/" className="flex items-center space-x-2">
           <Gamepad2 className="h-8 w-8 text-primary animate-cyber-pulse" />
           <span className="text-2xl font-bold font-orbitron neon-text">
             Virtual<span className="text-secondary">Game</span>
           </span>
-        </div>
+        </Link>
 
         {/* Search bar - Desktop */}
         <div className="hidden md:flex flex-1 max-w-md mx-8">
@@ -54,13 +60,17 @@ const Header = () => {
         {/* Navigation - Desktop */}
         <nav className="hidden lg:flex items-center space-x-6">
           {navigation.map((item) => (
-            <a
+            <Link
               key={item.name}
-              href={item.href}
-              className="text-sm font-medium text-foreground hover:text-primary transition-colors hover:neon-text"
+              to={item.href}
+              className={`text-sm font-medium transition-colors hover:text-primary hover:neon-text ${
+                isActive(item.href) 
+                  ? "text-primary neon-text" 
+                  : "text-foreground"
+              }`}
             >
               {item.name}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -105,14 +115,18 @@ const Header = () => {
             {/* Mobile navigation */}
             <nav className="flex flex-col space-y-2">
               {navigation.map((item) => (
-                <a
+                <Link
                   key={item.name}
-                  href={item.href}
-                  className="px-3 py-2 text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 rounded-md transition-colors"
+                  to={item.href}
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    isActive(item.href)
+                      ? "text-primary bg-primary/5 neon-text"
+                      : "text-foreground hover:text-primary hover:bg-primary/5"
+                  }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.name}
-                </a>
+                </Link>
               ))}
             </nav>
           </div>

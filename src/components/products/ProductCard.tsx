@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Star, ShoppingCart, Eye } from "lucide-react"
+import { Link } from "react-router-dom"
 import type { Product } from "@/types/database"
 
 interface ProductCardProps {
@@ -113,8 +114,11 @@ const ProductCard = ({ product }: ProductCardProps) => {
           variant="outline" 
           className="flex-1"
           size="sm"
+          asChild
         >
-          Ver Detalles
+          <Link to={`/product/${product.slug}`}>
+            Ver Detalles
+          </Link>
         </CyberButton>
         <CyberButton 
           variant="cyber" 
