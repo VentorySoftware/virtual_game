@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback, useEffect } from "react"
-import { Canvas as FabricCanvas, FabricImage } from "fabric"
-import { Upload, RotateCw, ZoomIn, ZoomOut, Save, X, Image as ImageIcon } from "lucide-react"
+import { useState, useRef, useCallback } from "react"
+import ReactCrop, { Crop, PixelCrop } from "react-image-crop"
+import "react-image-crop/dist/ReactCrop.css"
+import { Upload, Save, X, Image as ImageIcon, RotateCw } from "lucide-react"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -23,103 +24,14 @@ export const ImageUploadCrop = ({
   folder = "categories"
 }: ImageUploadCropProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [imageSrc, setImageSrc] = useState<string>("")
+  const [crop, setCrop] = useState<Crop>()
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>()
+  const [rotation, setRotation] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
+  const imgRef = useRef<HTMLImageElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const fabricCanvasRef = useRef<FabricCanvas | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const isDisposingRef = useRef(false)
-
-  // Safe canvas disposal
-  const disposeCanvas = useCallback(() => {
-    if (isDisposingRef.current) return
-    isDisposingRef.current = true
-    
-    if (fabricCanvasRef.current) {
-      try {
-        const canvas = fabricCanvasRef.current
-        fabricCanvasRef.current = null
-        
-        // Clear all objects first
-        canvas.clear()
-        
-        // Then dispose
-        canvas.dispose()
-      } catch (error) {
-        console.warn('Canvas disposal warning:', error)
-      }
-    }
-    
-    setTimeout(() => {
-      isDisposingRef.current = false
-    }, 100)
-  }, [])
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      disposeCanvas()
-    }
-  }, [disposeCanvas])
-
-  const initializeCanvas = useCallback((imageElement: HTMLImageElement) => {
-    if (!canvasRef.current) return
-
-    // Dispose existing canvas first
-    disposeCanvas()
-
-    // Wait a bit longer for cleanup to complete
-    setTimeout(() => {
-      if (!canvasRef.current || isDisposingRef.current) return
-      
-      try {
-        const canvas = new FabricCanvas(canvasRef.current, {
-          width: 400,
-          height: 300,
-          backgroundColor: "#ffffff",
-        })
-
-        fabricCanvasRef.current = canvas
-
-        // Create fabric image and add to canvas
-        FabricImage.fromURL(imageElement.src, {
-          crossOrigin: 'anonymous'
-        }).then((fabricImg) => {
-          // Check if canvas still exists and hasn't been disposed
-          if (!fabricCanvasRef.current || isDisposingRef.current) return
-          
-          // Scale image to fit canvas while maintaining aspect ratio
-          const canvasWidth = canvas.getWidth()
-          const canvasHeight = canvas.getHeight()
-          const imgWidth = fabricImg.width || 1
-          const imgHeight = fabricImg.height || 1
-          
-          const scaleX = canvasWidth / imgWidth
-          const scaleY = canvasHeight / imgHeight
-          const scale = Math.min(scaleX, scaleY)
-          
-          fabricImg.scale(scale)
-          
-          // Center the image manually
-          fabricImg.set({
-            left: (canvasWidth - fabricImg.getScaledWidth()) / 2,
-            top: (canvasHeight - fabricImg.getScaledHeight()) / 2
-          })
-          
-          canvas.add(fabricImg)
-          canvas.setActiveObject(fabricImg)
-          canvas.renderAll()
-          
-          console.log('Image loaded successfully in canvas')
-        }).catch(error => {
-          console.error('Image loading error:', error)
-          toast.error("Error al cargar la imagen")
-        })
-      } catch (error) {
-        console.error('Canvas initialization error:', error)
-        toast.error("Error al inicializar el editor")
-      }
-    }, 100)
-  }, [disposeCanvas])
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -130,77 +42,96 @@ export const ImageUploadCrop = ({
       return
     }
 
-    console.log('File selected:', file.name)
     setSelectedFile(file)
     
     const reader = new FileReader()
     reader.onload = (e) => {
-      if (!e.target?.result) return
-      
-      const img = new Image()
-      img.onload = () => {
-        console.log('Image loaded, initializing canvas...')
-        initializeCanvas(img)
+      if (e.target?.result) {
+        setImageSrc(e.target.result as string)
+        // Set default crop to center of image
+        setCrop({
+          unit: '%',
+          x: 10,
+          y: 10,
+          width: 80,
+          height: 80
+        })
       }
-      img.onerror = (error) => {
-        console.error('Error loading image:', error)
-        toast.error("Error al cargar la imagen")
-      }
-      img.src = e.target.result as string
-    }
-    reader.onerror = (error) => {
-      console.error('FileReader error:', error)
-      toast.error("Error al leer el archivo")
     }
     reader.readAsDataURL(file)
   }
 
   const handleRotate = () => {
-    if (!fabricCanvasRef.current || isDisposingRef.current) return
-    const activeObject = fabricCanvasRef.current.getActiveObject()
-    if (activeObject) {
-      activeObject.rotate((activeObject.angle || 0) + 90)
-      fabricCanvasRef.current.renderAll()
-    }
+    setRotation(prev => (prev + 90) % 360)
   }
 
-  const handleZoomIn = () => {
-    if (!fabricCanvasRef.current || isDisposingRef.current) return
-    const activeObject = fabricCanvasRef.current.getActiveObject()
-    if (activeObject) {
-      const currentScale = activeObject.scaleX || 1
-      activeObject.scale(currentScale * 1.1)
-      fabricCanvasRef.current.renderAll()
-    }
-  }
+  // Helper function to create cropped canvas
+  const getCroppedCanvas = useCallback((
+    image: HTMLImageElement,
+    crop: PixelCrop,
+    rotation: number = 0
+  ) => {
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    if (!ctx) throw new Error('No 2d context')
 
-  const handleZoomOut = () => {
-    if (!fabricCanvasRef.current || isDisposingRef.current) return
-    const activeObject = fabricCanvasRef.current.getActiveObject()
-    if (activeObject) {
-      const currentScale = activeObject.scaleX || 1
-      activeObject.scale(currentScale * 0.9)
-      fabricCanvasRef.current.renderAll()
-    }
-  }
+    const rotRad = (rotation * Math.PI) / 180
+    const { naturalWidth: imgWidth, naturalHeight: imgHeight } = image
+
+    // Calculate rotated dimensions
+    const cos = Math.abs(Math.cos(rotRad))
+    const sin = Math.abs(Math.sin(rotRad))
+    const rotatedWidth = imgWidth * cos + imgHeight * sin
+    const rotatedHeight = imgWidth * sin + imgHeight * cos
+
+    // Set canvas size to crop size
+    canvas.width = crop.width
+    canvas.height = crop.height
+
+    // Calculate scale factors
+    const scaleX = rotatedWidth / imgWidth
+    const scaleY = rotatedHeight / imgHeight
+
+    ctx.save()
+
+    // Move to center of crop area
+    ctx.translate(crop.width / 2, crop.height / 2)
+    
+    // Apply rotation
+    ctx.rotate(rotRad)
+    
+    // Draw image centered and scaled
+    ctx.drawImage(
+      image,
+      (-imgWidth / 2) * scaleX,
+      (-imgHeight / 2) * scaleY,
+      imgWidth * scaleX,
+      imgHeight * scaleY
+    )
+
+    ctx.restore()
+
+    return canvas
+  }, [])
 
   const handleSave = async () => {
-    if (!fabricCanvasRef.current || !selectedFile || isDisposingRef.current) return
+    if (!completedCrop || !imgRef.current || !selectedFile) {
+      toast.error("Por favor selecciona un área para recortar")
+      return
+    }
 
     setIsLoading(true)
     
     try {
-      // Export canvas as blob
-      const dataURL = fabricCanvasRef.current.toDataURL({
-        format: 'jpeg',
-        quality: 0.8,
-        multiplier: 2 // Higher resolution
+      const canvas = getCroppedCanvas(imgRef.current, completedCrop, rotation)
+      
+      // Convert canvas to blob
+      const blob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob)
+        }, 'image/jpeg', 0.8)
       })
-      
-      // Convert data URL to blob
-      const response = await fetch(dataURL)
-      const blob = await response.blob()
-      
+
       // Generate unique filename
       const fileExt = selectedFile.name.split('.').pop() || 'jpg'
       const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
@@ -231,17 +162,12 @@ export const ImageUploadCrop = ({
     }
   }
 
-  const handleCancel = () => {
-    disposeCanvas()
-    onCancel()
-  }
-
   return (
     <Card className="cyber-card">
       <CardContent className="p-6 space-y-4">
         <div className="flex items-center justify-between">
           <Label className="text-lg font-semibold">Editor de Imagen</Label>
-          <CyberButton variant="ghost" size="sm" onClick={handleCancel}>
+          <CyberButton variant="ghost" size="sm" onClick={onCancel}>
             <X className="h-4 w-4" />
           </CyberButton>
         </div>
@@ -272,9 +198,27 @@ export const ImageUploadCrop = ({
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Canvas Editor */}
+            {/* Image Crop Area */}
             <div className="border border-border rounded-lg overflow-hidden">
-              <canvas ref={canvasRef} className="max-w-full" />
+              <ReactCrop
+                crop={crop}
+                onChange={(_, percentCrop) => setCrop(percentCrop)}
+                onComplete={(c) => setCompletedCrop(c)}
+                aspect={1}
+                minWidth={100}
+                minHeight={100}
+              >
+                <img
+                  ref={imgRef}
+                  alt="Crop me"
+                  src={imageSrc}
+                  style={{ 
+                    transform: `rotate(${rotation}deg)`,
+                    maxWidth: '100%',
+                    maxHeight: '400px'
+                  }}
+                />
+              </ReactCrop>
             </div>
 
             {/* Controls */}
@@ -283,24 +227,22 @@ export const ImageUploadCrop = ({
                 <RotateCw className="h-4 w-4 mr-1" />
                 Rotar
               </CyberButton>
-              <CyberButton variant="outline" size="sm" onClick={handleZoomIn}>
-                <ZoomIn className="h-4 w-4 mr-1" />
-                Zoom +
-              </CyberButton>
-              <CyberButton variant="outline" size="sm" onClick={handleZoomOut}>
-                <ZoomOut className="h-4 w-4 mr-1" />
-                Zoom -
-              </CyberButton>
             </div>
 
             {/* Action Buttons */}
             <div className="flex gap-2 justify-end">
-              <CyberButton variant="outline" onClick={() => setSelectedFile(null)}>
+              <CyberButton variant="outline" onClick={() => {
+                setSelectedFile(null)
+                setImageSrc("")
+                setCrop(undefined)
+                setCompletedCrop(undefined)
+                setRotation(0)
+              }}>
                 Cambiar Imagen
               </CyberButton>
               <CyberButton 
                 onClick={handleSave} 
-                disabled={isLoading}
+                disabled={isLoading || !completedCrop}
                 className="flex items-center gap-2"
               >
                 <Save className="h-4 w-4" />
@@ -317,6 +259,9 @@ export const ImageUploadCrop = ({
           onChange={handleFileSelect}
           className="hidden"
         />
+
+        {/* Hidden canvas for processing */}
+        <canvas ref={canvasRef} style={{ display: 'none' }} />
       </CardContent>
     </Card>
   )
