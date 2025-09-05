@@ -65,7 +65,16 @@ const Auth = () => {
         } else {
           toast({
             title: "¡Registro exitoso!",
-            description: "Revisa tu email para confirmar tu cuenta.",
+            description: "Ahora puedes iniciar sesión con tu cuenta.",
+          })
+          // Cambiar a la vista de login después del registro exitoso
+          setIsLogin(true)
+          // Limpiar el formulario
+          setFormData({
+            email: formData.email, // Mantener el email para facilitar el login
+            password: '',
+            firstName: '',
+            lastName: '',
           })
         }
       }
