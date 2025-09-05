@@ -25,6 +25,8 @@ const ProductsAdmin = () => {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState("")
+  const [visibilityFilter, setVisibilityFilter] = useState("")
   const [showCreateProduct, setShowCreateProduct] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
   const [platforms, setPlatforms] = useState<any[]>([])
@@ -309,10 +311,29 @@ const ProductsAdmin = () => {
     }).format(price)
   }
 
-  const filteredProducts = products.filter(product =>
-    product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredProducts = products.filter(product => {
+    // Filtro por búsqueda (nombre o SKU)
+    const matchesSearch = searchTerm === "" || 
+      product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+    
+    // Filtro por categoría
+    const matchesCategory = categoryFilter === "" || 
+      product.category?.id === categoryFilter
+    
+    // Filtro por visibilidad
+    const matchesVisibility = visibilityFilter === "" ||
+      (visibilityFilter === "active" && product.is_active) ||
+      (visibilityFilter === "inactive" && !product.is_active)
+    
+    return matchesSearch && matchesCategory && matchesVisibility
+  })
+
+  const clearFilters = () => {
+    setSearchTerm("")
+    setCategoryFilter("")
+    setVisibilityFilter("")
+  }
 
   if (loading) {
     return (
@@ -338,6 +359,19 @@ const ProductsAdmin = () => {
             <p className="text-muted-foreground">
               Administra el catálogo de productos
             </p>
+          </div>
+          
+          <CyberButton 
+            className="flex items-center gap-2"
+            onClick={() => {
+              setEditingProduct(null)
+              resetForm()
+              setShowCreateProduct(true)
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            Nuevo Producto
+          </CyberButton>
         </div>
 
         {/* Image Editor Modal */}
@@ -591,8 +625,9 @@ const ProductsAdmin = () => {
         {/* Search and Filters */}
         <Card className="cyber-card">
           <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
+            <div className="space-y-4">
+              {/* Search Bar */}
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Buscar productos por nombre o SKU..."
@@ -601,6 +636,92 @@ const ProductsAdmin = () => {
                   className="pl-10 cyber-border"
                 />
               </div>
+
+              {/* Filters Row */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Category Filter */}
+                <div className="flex-1">
+                  <Label className="text-sm font-medium mb-2 block">Categoría</Label>
+                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                    <SelectTrigger className="cyber-border">
+                      <SelectValue placeholder="Todas las categorías" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Todas las categorías</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Visibility Filter */}
+                <div className="flex-1">
+                  <Label className="text-sm font-medium mb-2 block">Estado</Label>
+                  <Select value={visibilityFilter} onValueChange={setVisibilityFilter}>
+                    <SelectTrigger className="cyber-border">
+                      <SelectValue placeholder="Todos los estados" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Todos los estados</SelectItem>
+                      <SelectItem value="active">Activos</SelectItem>
+                      <SelectItem value="inactive">Inactivos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Clear Filters Button */}
+                <div className="flex-shrink-0 flex items-end">
+                  <CyberButton 
+                    variant="outline" 
+                    onClick={clearFilters}
+                    className="whitespace-nowrap"
+                  >
+                    Limpiar Filtros
+                  </CyberButton>
+                </div>
+              </div>
+
+              {/* Active Filters Summary */}
+              {(searchTerm || categoryFilter || visibilityFilter) && (
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {searchTerm && (
+                    <Badge variant="secondary" className="flex items-center gap-1">
+                      Búsqueda: "{searchTerm}"
+                      <button 
+                        onClick={() => setSearchTerm("")}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  )}
+                  {categoryFilter && (
+                    <Badge variant="secondary" className="flex items-center gap-1">
+                      Categoría: {categories.find(c => c.id === categoryFilter)?.name}
+                      <button 
+                        onClick={() => setCategoryFilter("")}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  )}
+                  {visibilityFilter && (
+                    <Badge variant="secondary" className="flex items-center gap-1">
+                      Estado: {visibilityFilter === 'active' ? 'Activos' : 'Inactivos'}
+                      <button 
+                        onClick={() => setVisibilityFilter("")}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -611,17 +732,46 @@ const ProductsAdmin = () => {
             <CardContent className="flex flex-col items-center justify-center py-16 space-y-4">
               <Package className="h-16 w-16 text-muted-foreground" />
               <div className="text-center">
-                <h3 className="text-lg font-semibold mb-2">No se encontraron productos</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  {(searchTerm || categoryFilter || visibilityFilter) 
+                    ? 'No se encontraron productos con los filtros aplicados' 
+                    : 'No hay productos disponibles'
+                  }
+                </h3>
                 <p className="text-muted-foreground">
-                  {searchTerm ? 'Intenta con otros términos de búsqueda' : 'Comienza agregando tu primer producto'}
+                  {(searchTerm || categoryFilter || visibilityFilter) 
+                    ? 'Intenta ajustar los filtros o crear un nuevo producto'
+                    : 'Comienza agregando tu primer producto'
+                  }
                 </p>
+                {(searchTerm || categoryFilter || visibilityFilter) && (
+                  <CyberButton 
+                    variant="outline" 
+                    className="mt-3"
+                    onClick={clearFilters}
+                  >
+                    Limpiar Filtros
+                  </CyberButton>
+                )}
               </div>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProducts.map((product) => (
-              <Card key={product.id} className="cyber-card group hover:shadow-glow-primary">
+          <div className="space-y-4">
+            {/* Results Summary */}
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                {filteredProducts.length === products.length 
+                  ? `Mostrando ${filteredProducts.length} productos`
+                  : `Mostrando ${filteredProducts.length} de ${products.length} productos`
+                }
+              </p>
+            </div>
+
+            {/* Products Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProducts.map((product) => (
+                <Card key={product.id} className="cyber-card group hover:shadow-glow-primary">
                 <CardHeader className="p-0">
                   <div className="relative">
                     <img
@@ -715,11 +865,11 @@ const ProductsAdmin = () => {
                     <span>Rating: {product.rating}/5</span>
                   </div>
                 </CardContent>
-              </Card>
-            ))}
+                </Card>
+              ))}
+            </div>
           </div>
         )}
-      </div>
     </AdminLayout>
   )
 }
