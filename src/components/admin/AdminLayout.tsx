@@ -6,6 +6,7 @@ import {
   ShoppingCart, 
   Users, 
   Settings,
+  FolderTree,
   Menu,
   X,
   LogOut,
@@ -28,6 +29,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navigation = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Productos', href: '/admin/products', icon: Package },
+    { name: 'Categorías', href: '/admin/categories', icon: FolderTree },
     { name: 'Pedidos', href: '/admin/orders', icon: ShoppingCart },
     { name: 'Usuarios', href: '/admin/users', icon: Users },
     { name: 'Configuración', href: '/admin/settings', icon: Settings },
