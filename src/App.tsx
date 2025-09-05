@@ -20,6 +20,7 @@ import OrderConfirmation from "./pages/OrderConfirmation";
 import Dashboard from "./pages/admin/Dashboard";
 import ProductsAdmin from "./pages/admin/Products";
 import CategoriesAdmin from "./pages/admin/Categories";
+import PromotionsAdmin from "./pages/admin/Promotions";
 import OrdersAdmin from "./pages/admin/Orders";
 import UsersAdmin from "./pages/admin/Users";
 import SettingsAdmin from "./pages/admin/Settings";
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="/admin" element={<Dashboard />} />
               <Route path="/admin/products" element={<ProductsAdmin />} />
               <Route path="/admin/categories" element={<CategoriesAdmin />} />
+              <Route path="/admin/promotions" element={<PromotionsAdmin />} />
               <Route path="/admin/orders" element={<OrdersAdmin />} />
               <Route path="/admin/users" element={<UsersAdmin />} />
               <Route path="/admin/settings" element={<SettingsAdmin />} />
