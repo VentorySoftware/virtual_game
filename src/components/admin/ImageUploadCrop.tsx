@@ -67,48 +67,58 @@ export const ImageUploadCrop = ({
     // Dispose existing canvas first
     disposeCanvas()
 
-    // Small delay to ensure cleanup is complete
+    // Wait a bit longer for cleanup to complete
     setTimeout(() => {
-      if (!canvasRef.current) return
+      if (!canvasRef.current || isDisposingRef.current) return
       
-      const canvas = new FabricCanvas(canvasRef.current, {
-        width: 400,
-        height: 300,
-        backgroundColor: "#ffffff",
-      })
-
-      fabricCanvasRef.current = canvas
-
-      // Create fabric image and add to canvas
-      FabricImage.fromURL(imageElement.src).then((fabricImg) => {
-        // Check if canvas still exists and hasn't been disposed
-        if (!fabricCanvasRef.current || isDisposingRef.current) return
-        
-        // Scale image to fit canvas while maintaining aspect ratio
-        const canvasWidth = canvas.getWidth()
-        const canvasHeight = canvas.getHeight()
-        const imgWidth = fabricImg.width || 1
-        const imgHeight = fabricImg.height || 1
-        
-        const scaleX = canvasWidth / imgWidth
-        const scaleY = canvasHeight / imgHeight
-        const scale = Math.min(scaleX, scaleY)
-        
-        fabricImg.scale(scale)
-        
-        // Center the image manually
-        fabricImg.set({
-          left: (canvasWidth - fabricImg.getScaledWidth()) / 2,
-          top: (canvasHeight - fabricImg.getScaledHeight()) / 2
+      try {
+        const canvas = new FabricCanvas(canvasRef.current, {
+          width: 400,
+          height: 300,
+          backgroundColor: "#ffffff",
         })
-        
-        canvas.add(fabricImg)
-        canvas.setActiveObject(fabricImg)
-        canvas.renderAll()
-      }).catch(error => {
-        console.warn('Image loading error:', error)
-      })
-    }, 50)
+
+        fabricCanvasRef.current = canvas
+
+        // Create fabric image and add to canvas
+        FabricImage.fromURL(imageElement.src, {
+          crossOrigin: 'anonymous'
+        }).then((fabricImg) => {
+          // Check if canvas still exists and hasn't been disposed
+          if (!fabricCanvasRef.current || isDisposingRef.current) return
+          
+          // Scale image to fit canvas while maintaining aspect ratio
+          const canvasWidth = canvas.getWidth()
+          const canvasHeight = canvas.getHeight()
+          const imgWidth = fabricImg.width || 1
+          const imgHeight = fabricImg.height || 1
+          
+          const scaleX = canvasWidth / imgWidth
+          const scaleY = canvasHeight / imgHeight
+          const scale = Math.min(scaleX, scaleY)
+          
+          fabricImg.scale(scale)
+          
+          // Center the image manually
+          fabricImg.set({
+            left: (canvasWidth - fabricImg.getScaledWidth()) / 2,
+            top: (canvasHeight - fabricImg.getScaledHeight()) / 2
+          })
+          
+          canvas.add(fabricImg)
+          canvas.setActiveObject(fabricImg)
+          canvas.renderAll()
+          
+          console.log('Image loaded successfully in canvas')
+        }).catch(error => {
+          console.error('Image loading error:', error)
+          toast.error("Error al cargar la imagen")
+        })
+      } catch (error) {
+        console.error('Canvas initialization error:', error)
+        toast.error("Error al inicializar el editor")
+      }
+    }, 100)
   }, [disposeCanvas])
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -120,13 +130,27 @@ export const ImageUploadCrop = ({
       return
     }
 
+    console.log('File selected:', file.name)
     setSelectedFile(file)
     
     const reader = new FileReader()
     reader.onload = (e) => {
+      if (!e.target?.result) return
+      
       const img = new Image()
-      img.onload = () => initializeCanvas(img)
-      img.src = e.target?.result as string
+      img.onload = () => {
+        console.log('Image loaded, initializing canvas...')
+        initializeCanvas(img)
+      }
+      img.onerror = (error) => {
+        console.error('Error loading image:', error)
+        toast.error("Error al cargar la imagen")
+      }
+      img.src = e.target.result as string
+    }
+    reader.onerror = (error) => {
+      console.error('FileReader error:', error)
+      toast.error("Error al leer el archivo")
     }
     reader.readAsDataURL(file)
   }
