@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useCart } from "@/contexts/CartContext"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
+import { usePaymentMethods } from "@/hooks/usePaymentMethods"
 import { supabase } from "@/integrations/supabase/client"
 import { useSiteSettings } from "@/hooks/useSiteSettings"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -25,7 +26,7 @@ interface CheckoutFormData {
   notes: string
 }
 
-type PaymentMethod = 'bank_transfer' | 'mercadopago'
+type PaymentMethod = string
 
 const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart()

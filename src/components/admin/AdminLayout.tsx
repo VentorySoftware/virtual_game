@@ -12,7 +12,8 @@ import {
   X,
   LogOut,
   Gamepad2,
-  Home
+  Home,
+  CreditCard
 } from "lucide-react"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { useAuth } from "@/contexts/AuthContext"
@@ -32,6 +33,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { name: 'Productos', href: '/admin/products', icon: Package },
     { name: 'Categorías', href: '/admin/categories', icon: FolderTree },
     { name: 'Promociones', href: '/admin/promotions', icon: Megaphone },
+    { name: 'Medios de Pago', href: '/admin/payment-methods', icon: CreditCard },
     { name: 'Pedidos', href: '/admin/orders', icon: ShoppingCart },
     { name: 'Usuarios', href: '/admin/users', icon: Users },
     { name: 'Configuración', href: '/admin/settings', icon: Settings },
