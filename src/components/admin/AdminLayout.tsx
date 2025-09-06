@@ -33,6 +33,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Productos', href: '/admin/products', icon: Package },
     { name: 'Categorías', href: '/admin/categories', icon: FolderTree },
+    { name: 'Plataformas', href: '/admin/platforms', icon: Gamepad2 },
     { name: 'Promociones', href: '/admin/promotions', icon: Megaphone },
     { name: 'Medios de Pago', href: '/admin/payment-methods', icon: CreditCard },
     { name: 'Pedidos', href: '/admin/orders', icon: ShoppingCart },

@@ -22,6 +22,7 @@ import Favorites from "./pages/Favorites";
 import Dashboard from "./pages/admin/Dashboard";
 import ProductsAdmin from "./pages/admin/Products";
 import CategoriesAdmin from "./pages/admin/Categories";
+import PlatformsAdmin from "./pages/admin/Platforms";
 import PromotionsAdmin from "./pages/admin/Promotions";
 import PaymentMethodsAdmin from "./pages/admin/PaymentMethods";
 import OrdersAdmin from "./pages/admin/Orders";
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/admin" element={<Dashboard />} />
               <Route path="/admin/products" element={<ProductsAdmin />} />
               <Route path="/admin/categories" element={<CategoriesAdmin />} />
+              <Route path="/admin/platforms" element={<PlatformsAdmin />} />
               <Route path="/admin/promotions" element={<PromotionsAdmin />} />
               <Route path="/admin/payment-methods" element={<PaymentMethodsAdmin />} />
               <Route path="/admin/orders" element={<OrdersAdmin />} />
