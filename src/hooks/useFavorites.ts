@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
@@ -9,15 +9,7 @@ export const useFavorites = () => {
   const { user } = useAuth()
   const { toast } = useToast()
 
-  useEffect(() => {
-    if (user) {
-      fetchFavorites()
-    } else {
-      setFavorites([])
-    }
-  }, [user])
-
-  const fetchFavorites = async () => {
+  const fetchFavorites = useCallback(async () => {
     if (!user) return
 
     try {
@@ -35,7 +27,15 @@ export const useFavorites = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (user) {
+      fetchFavorites()
+    } else {
+      setFavorites([])
+    }
+  }, [user, fetchFavorites])
 
   const addToFavorites = async (productId: string) => {
     if (!user) {
