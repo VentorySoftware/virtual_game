@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { Search, ShoppingCart, User, Menu, X, Gamepad2, LogOut, Settings } from "lucide-react"
+import { Search, ShoppingCart, User, Menu, X, Gamepad2, LogOut, Settings, Heart } from "lucide-react"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/contexts/AuthContext"
@@ -130,6 +130,10 @@ const Header = () => {
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
                   <User className="mr-2 h-4 w-4" />
                   Mi Perfil
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/favorites")}>
+                  <Heart className="mr-2 h-4 w-4" />
+                  Mis Favoritos
                 </DropdownMenuItem>
                 {isAdmin ? (
                   <DropdownMenuItem onClick={() => navigate("/admin")}>

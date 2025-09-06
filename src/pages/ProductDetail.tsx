@@ -20,6 +20,7 @@ import {
   MessageCircle
 } from "lucide-react"
 import { useSiteSettings } from "@/contexts/SiteSettingsContext"
+import { useFavorites } from "@/hooks/useFavorites"
 
 const ProductDetail = () => {
   const { slug } = useParams()
@@ -29,6 +30,7 @@ const ProductDetail = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const { settings } = useSiteSettings()
+  const { toggleFavorite, isFavorite } = useFavorites()
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -247,8 +249,13 @@ const ProductDetail = () => {
                   <ShoppingCart className="w-5 h-5 mr-2" />
                   {isPreOrder ? 'Pre-ordenar' : 'Agregar al Carrito'}
                 </CyberButton>
-                <CyberButton variant="outline" size="lg">
-                  <Heart className="w-5 h-5" />
+                <CyberButton 
+                  variant="outline" 
+                  size="lg"
+                  onClick={() => toggleFavorite(product.id)}
+                  className={isFavorite(product.id) ? "text-red-500 border-red-500" : ""}
+                >
+                  <Heart className={`w-5 h-5 ${isFavorite(product.id) ? "fill-red-500" : ""}`} />
                 </CyberButton>
                 <CyberButton variant="outline" size="lg">
                   <Share2 className="w-5 h-5" />

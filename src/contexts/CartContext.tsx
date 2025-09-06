@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from "@/contexts/AuthContext"
+import { useNavigate, useLocation } from "react-router-dom"
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 
@@ -45,6 +46,8 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   const [loading, setLoading] = useState(false)
   const { user } = useAuth()
   const { toast } = useToast()
+  const navigate = useNavigate()
+  const location = useLocation()
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
   const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
@@ -126,6 +129,20 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   }
 
   const addToCart = async (newItem: Omit<CartItem, 'id'>) => {
+    // Verificar autenticación antes de agregar al carrito
+    if (!user) {
+      toast({
+        title: "Inicia sesión para comprar",
+        description: "Debes iniciar sesión para agregar productos al carrito.",
+        variant: "destructive",
+      })
+      
+      // Guardar la URL actual para redirigir después del login
+      const returnUrl = location.pathname + location.search
+      navigate(`/auth?returnUrl=${encodeURIComponent(returnUrl)}`)
+      return
+    }
+
     if (user) {
       // Add to database for authenticated users
       try {
@@ -154,30 +171,6 @@ export const CartProvider = ({ children }: CartProviderProps) => {
           variant: "destructive",
         })
       }
-    } else {
-      // Add to localStorage for guests
-      const existingItem = items.find(item => 
-        item.product_id === newItem.product_id && 
-        item.bundle_id === newItem.bundle_id
-      )
-
-      let newItems: CartItem[]
-      if (existingItem) {
-        newItems = items.map(item => 
-          item.id === existingItem.id 
-            ? { ...item, quantity: item.quantity + newItem.quantity }
-            : item
-        )
-      } else {
-        newItems = [...items, { ...newItem, id: Date.now().toString() }]
-      }
-
-      setItems(newItems)
-      saveGuestCart(newItems)
-      toast({
-        title: "Agregado al carrito",
-        description: `${newItem.product_name} se agregó correctamente.`,
-      })
     }
   }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CyberButton } from '@/components/ui/cyber-button'
 import { Input } from '@/components/ui/input'
@@ -7,7 +7,6 @@ import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useBusinessHours } from '@/hooks/useBusinessHours'
 import { Clock, Plus, Trash2, Save, AlertCircle } from 'lucide-react'
-import { useNotifications } from '@/hooks/useNotifications'
 import AdminLayout from '@/components/admin/AdminLayout'
 
 type TimeSlot = {
@@ -15,9 +14,8 @@ type TimeSlot = {
   end: string
 }
 
-const BusinessHours = () => {
+const BusinessHoursAdmin = () => {
   const { businessHours, loading, saveBusinessHour, deleteBusinessHour } = useBusinessHours()
-  const notifications = useNotifications()
 
   const [editingHours, setEditingHours] = useState<{
     [key: string]: {
@@ -25,8 +23,6 @@ const BusinessHours = () => {
       is_closed: boolean
     }
   }>({})
-
-  const [error, setError] = useState<string | null>(null)
 
   const dayTypes = [
     { key: 'lunes a viernes', label: 'Lunes a Viernes' },
@@ -36,28 +32,9 @@ const BusinessHours = () => {
   ]
 
   const getCurrentHours = (dayType: string) => {
-    try {
-      if (loading || !businessHours) {
-        return {
-          time_slots: [{ start: '09:00', end: '18:00' }],
-          is_closed: false
-        }
-      }
-
-      const existing = businessHours.find(h => h.day_type === dayType)
-      return existing ? {
-        time_slots: existing.time_slots as TimeSlot[],
-        is_closed: existing.is_closed
-      } : {
-        time_slots: [{ start: '09:00', end: '18:00' }],
-        is_closed: false
-      }
-    } catch (err) {
-      console.error('Error getting current hours:', err)
-      return {
-        time_slots: [{ start: '09:00', end: '18:00' }],
-        is_closed: false
-      }
+    return {
+      time_slots: [{ start: '09:00', end: '18:00' }],
+      is_closed: false
     }
   }
 
@@ -99,204 +76,160 @@ const BusinessHours = () => {
 
   const handleSave = async (dayType: string) => {
     try {
-      setError(null)
       const hours = getEditingHours(dayType)
       await saveBusinessHour({
         day_type: dayType,
         time_slots: hours.time_slots,
         is_closed: hours.is_closed
       })
-      // Clear editing state for this day type
-      setEditingHours(prev => {
-        const updated = { ...prev }
-        delete updated[dayType]
-        return updated
-      })
     } catch (error) {
-      console.error('Error saving hours:', error)
-      setError('Error al guardar los horarios. Por favor, inténtalo de nuevo.')
+      console.error('Error saving business hours:', error)
     }
-  }
-
-  const handleDelete = async (dayType: string) => {
-    try {
-      setError(null)
-      await deleteBusinessHour(dayType)
-    } catch (error) {
-      console.error('Error deleting hours:', error)
-      setError('Error al eliminar los horarios. Por favor, inténtalo de nuevo.')
-    }
-  }
-
-  if (loading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </AdminLayout>
-    )
   }
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <Clock className="h-8 w-8 text-primary" />
+      <div className="container py-8">
+        <div className="flex items-center gap-3 mb-8">
+          <Clock className="w-8 h-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-bold font-orbitron neon-text">
-              Horarios de Atención
-            </h1>
-            <p className="text-muted-foreground">
-              Configura los horarios de atención para diferentes días de la semana
-            </p>
+            <h1 className="text-3xl font-bold font-orbitron">Horarios de Atención</h1>
+            <p className="text-muted-foreground">Configura los horarios de atención del negocio</p>
           </div>
         </div>
 
-        {error && (
-          <Card className="border-destructive/20 bg-destructive/5">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-2 text-destructive">
-                <AlertCircle className="h-5 w-5" />
-                <span>{error}</span>
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-amber-800 dark:text-amber-200">Funcionalidad en desarrollo</h3>
+                <p className="text-amber-700 dark:text-amber-300 text-sm mt-1">
+                  La gestión de horarios de atención estará disponible próximamente. 
+                  Por ahora puedes configurar esta información en la configuración general del sitio.
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          </div>
 
-        <Tabs defaultValue="lunes a viernes" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            {dayTypes.map(({ key, label }) => (
-              <TabsTrigger key={key} value={key}>
-                {label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <Tabs defaultValue="lunes a viernes" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              {dayTypes.map((dayType) => (
+                <TabsTrigger 
+                  key={dayType.key} 
+                  value={dayType.key}
+                  className="text-xs sm:text-sm"
+                >
+                  {dayType.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
-          {dayTypes.map(({ key, label }) => {
-            try {
-              const hours = getEditingHours(key)
-              const hasChanges = JSON.stringify(hours) !== JSON.stringify(getCurrentHours(key))
-
-              return (
-                <TabsContent key={key} value={key} className="space-y-6">
-                  <Card className="border-primary/20">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Clock className="h-5 w-5" />
-                        {label}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      {/* Closed Toggle */}
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id={`closed-${key}`}
-                          checked={hours.is_closed}
-                          onCheckedChange={(checked) =>
-                            updateEditingHours(key, { is_closed: checked })
-                          }
-                        />
-                        <Label htmlFor={`closed-${key}`}>
-                          {hours.is_closed ? 'Cerrado' : 'Abierto'}
-                        </Label>
+            {dayTypes.map((dayType) => (
+              <TabsContent key={dayType.key} value={dayType.key} className="mt-6">
+                <Card className="cyber-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-primary" />
+                      Horarios para {dayType.label}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Closed toggle */}
+                    <div className="flex items-center justify-between p-4 bg-card/50 rounded-lg border">
+                      <div>
+                        <Label className="text-base font-medium">Cerrado</Label>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Marcar como cerrado para {dayType.label.toLowerCase()}
+                        </p>
                       </div>
+                      <Switch
+                        checked={getEditingHours(dayType.key).is_closed}
+                        onCheckedChange={(checked) => 
+                          updateEditingHours(dayType.key, { is_closed: checked })
+                        }
+                      />
+                    </div>
 
-                      {/* Time Slots */}
-                      {!hours.is_closed && (
-                        <div className="space-y-4">
-                          <Label className="text-base font-semibold">Franjas Horarias</Label>
-                          {hours.time_slots.map((slot, index) => (
-                            <div key={index} className="flex items-center gap-4 p-4 border border-primary/20 rounded-lg">
-                              <div className="flex items-center gap-2">
-                                <Label htmlFor={`start-${key}-${index}`}>Desde:</Label>
-                                <Input
-                                  id={`start-${key}-${index}`}
-                                  type="time"
-                                  value={slot.start}
-                                  onChange={(e) => updateTimeSlot(key, index, 'start', e.target.value)}
-                                  className="w-32"
-                                />
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Label htmlFor={`end-${key}-${index}`}>Hasta:</Label>
-                                <Input
-                                  id={`end-${key}-${index}`}
-                                  type="time"
-                                  value={slot.end}
-                                  onChange={(e) => updateTimeSlot(key, index, 'end', e.target.value)}
-                                  className="w-32"
-                                />
-                              </div>
-                              {hours.time_slots.length > 1 && (
-                                <CyberButton
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => removeTimeSlot(key, index)}
-                                  className="text-destructive hover:text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </CyberButton>
-                              )}
-                            </div>
-                          ))}
-
+                    {/* Time slots */}
+                    {!getEditingHours(dayType.key).is_closed && (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-base font-medium">Horarios de Atención</Label>
                           <CyberButton
                             variant="outline"
-                            onClick={() => addTimeSlot(key)}
-                            className="w-full"
+                            size="sm"
+                            onClick={() => addTimeSlot(dayType.key)}
                           >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Agregar franja horaria
+                            <Plus className="w-4 h-4 mr-2" />
+                            Agregar Horario
                           </CyberButton>
                         </div>
-                      )}
 
-                      {/* Actions */}
-                      <div className="flex gap-3 pt-4">
-                        <CyberButton
-                          onClick={() => handleSave(key)}
-                          disabled={!hasChanges}
-                          className="flex items-center gap-2"
-                        >
-                          <Save className="h-4 w-4" />
-                          Guardar
-                        </CyberButton>
-                        {businessHours.some(h => h.day_type === key) && (
-                          <CyberButton
-                            variant="outline"
-                            onClick={() => handleDelete(key)}
-                            className="flex items-center gap-2 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Eliminar
-                          </CyberButton>
-                        )}
+                        {getEditingHours(dayType.key).time_slots.map((slot, index) => (
+                          <div key={index} className="flex items-center gap-4 p-4 bg-card/30 rounded-lg border">
+                            <div className="flex-1 grid grid-cols-2 gap-4">
+                              <div>
+                                <Label htmlFor={`start-${dayType.key}-${index}`} className="text-sm">
+                                  Apertura
+                                </Label>
+                                <Input
+                                  id={`start-${dayType.key}-${index}`}
+                                  type="time"
+                                  value={slot.start}
+                                  onChange={(e) => updateTimeSlot(dayType.key, index, 'start', e.target.value)}
+                                  className="cyber-border"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor={`end-${dayType.key}-${index}`} className="text-sm">
+                                  Cierre
+                                </Label>
+                                <Input
+                                  id={`end-${dayType.key}-${index}`}
+                                  type="time"
+                                  value={slot.end}
+                                  onChange={(e) => updateTimeSlot(dayType.key, index, 'end', e.target.value)}
+                                  className="cyber-border"
+                                />
+                              </div>
+                            </div>
+                            
+                            {getEditingHours(dayType.key).time_slots.length > 1 && (
+                              <CyberButton
+                                variant="outline"
+                                size="icon"
+                                onClick={() => removeTimeSlot(dayType.key, index)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </CyberButton>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              )
-            } catch (err) {
-              console.error(`Error rendering tab ${key}:`, err)
-              return (
-                <TabsContent key={key} value={key} className="space-y-6">
-                  <Card className="border-destructive/20">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center gap-2 text-destructive">
-                        <AlertCircle className="h-5 w-5" />
-                        <span>Error al cargar la configuración de {label}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              )
-            }
-          })}
-        </Tabs>
+                    )}
+
+                    {/* Save button */}
+                    <div className="pt-4 border-t">
+                      <CyberButton
+                        onClick={() => handleSave(dayType.key)}
+                        disabled={loading}
+                        className="w-full"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        {loading ? 'Guardando...' : 'Guardar Horarios'}
+                      </CyberButton>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </div>
       </div>
     </AdminLayout>
   )
 }
 
-export default BusinessHours
+export default BusinessHoursAdmin

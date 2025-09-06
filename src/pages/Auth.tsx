@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useLocation, useNavigate } from "react-router-dom"
 import { Link, Navigate } from "react-router-dom"
 import { Gamepad2, Eye, EyeOff, Mail, Lock, User } from "lucide-react"
 import { CyberButton } from "@/components/ui/cyber-button"
@@ -20,10 +21,16 @@ const Auth = () => {
 
   const { user, signIn, signUp } = useAuth()
   const { toast } = useToast()
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  // Obtener returnUrl de los parámetros de la URL
+  const searchParams = new URLSearchParams(location.search)
+  const returnUrl = searchParams.get('returnUrl') || '/'
 
   // Redirect if already authenticated
   if (user) {
-    return <Navigate to="/" replace />
+    return <Navigate to={returnUrl} replace />
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,6 +53,8 @@ const Auth = () => {
             title: "¡Bienvenido!",
             description: "Has iniciado sesión correctamente.",
           })
+          // Redirigir a la URL de retorno
+          navigate(returnUrl)
         }
       } else {
         const { error } = await signUp(

@@ -19,6 +19,7 @@ import Profile from "./pages/Profile";
 import MyOrders from "./pages/MyOrders";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
+import Favorites from "./pages/Favorites";
 import Dashboard from "./pages/admin/Dashboard";
 import ProductsAdmin from "./pages/admin/Products";
 import CategoriesAdmin from "./pages/admin/Categories";
@@ -47,6 +48,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/my-orders" element={<MyOrders />} />
+              <Route path="/favorites" element={<Favorites />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmation />} />
               <Route path="/admin" element={<Dashboard />} />
