@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
 
 interface OrderItem {
   id: string
@@ -119,6 +121,61 @@ const AdminMyOrders = () => {
       hour: '2-digit',
       minute: '2-digit'
     })
+  }
+
+  const printReceipt = (order: Order) => {
+    const doc = new jsPDF()
+
+    // Store name at the top
+    doc.setFontSize(18)
+    doc.text("Virtual Game", 105, 15, { align: "center" })
+
+    // Order header
+    doc.setFontSize(12)
+    doc.text(`Recibo de Pedido #${order.order_number}`, 105, 30, { align: "center" })
+    doc.text(`Fecha: ${formatDate(order.created_at)}`, 105, 37, { align: "center" })
+
+    // Billing info
+    doc.setFontSize(10)
+    doc.text("Información de Facturación:", 14, 50)
+    doc.text(`${order.billing_info.firstName} ${order.billing_info.lastName}`, 14, 57)
+    doc.text(`${order.billing_info.email}`, 14, 64)
+    if (order.billing_info.phone) {
+      doc.text(`${order.billing_info.phone}`, 14, 71)
+    }
+    if (order.billing_info.address) {
+      doc.text(`${order.billing_info.address}, ${order.billing_info.city} ${order.billing_info.postalCode}`, 14, 78)
+    }
+
+    // Table of products
+    const columns = ["Producto", "Cantidad", "Precio Unitario", "Total"]
+    const rows = order.order_items.map(item => [
+      item.product_name,
+      item.quantity.toString(),
+      formatPrice(item.price),
+      formatPrice(item.price * item.quantity)
+    ])
+
+    autoTable(doc, {
+      startY: 85,
+      head: [columns],
+      body: rows,
+      theme: "grid",
+      headStyles: { fillColor: [22, 160, 133] },
+      styles: { fontSize: 9 }
+    })
+
+    // Total
+    const finalY = (doc as any).lastAutoTable.finalY || 100
+    doc.setFontSize(12)
+    doc.text(`Total: ${formatPrice(order.total)}`, 14, finalY + 10)
+
+    // Footer
+    doc.setFontSize(8)
+    doc.text("NO VALIDO COMO FACTURA", 105, 280, { align: "center" })
+    doc.text("Sistema desarrollado por NUVEM Software", 105, 286, { align: "center" })
+
+    doc.save(`Recibo_Pedido_${order.order_number}.pdf`)
   }
 
   if (!user) {
@@ -309,19 +366,28 @@ const AdminMyOrders = () => {
                             </div>
 
                             {/* Notas del cliente */}
-                            {selectedOrder.customer_notes && (
-                              <div>
-                                <h4 className="font-semibold mb-2">Notas del Pedido</h4>
-                                <p className="text-sm bg-card/30 p-3 rounded">
-                                  {selectedOrder.customer_notes}
-                                </p>
-                              </div>
-                            )}
+                          {selectedOrder.customer_notes && (
+                            <div>
+                              <h4 className="font-semibold mb-2">Notas del Pedido</h4>
+                              <p className="text-sm bg-card/30 p-3 rounded">
+                                {selectedOrder.customer_notes}
+                              </p>
+                            </div>
+                          )}
+                          <div className="mt-4 flex justify-end">
+                            <CyberButton
+                              variant="outline"
+                              size="sm"
+                              onClick={() => printReceipt(selectedOrder)}
+                            >
+                              Imprimir Recibo
+                            </CyberButton>
                           </div>
-                        )}
-                      </DialogContent>
-                    </Dialog>
-                  </div>
+                        </div>
+                      )}
+                    </DialogContent>
+                  </Dialog>
+                </div>
 
                   {/* Items preview */}
                   <div className="text-sm text-muted-foreground">
