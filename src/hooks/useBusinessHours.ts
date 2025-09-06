@@ -50,20 +50,45 @@ export const useBusinessHours = () => {
       setLoading(true)
       setError(null)
 
-      const { data, error } = await supabase
+      // Primero verificar si ya existe un registro para este día
+      const { data: existing } = await supabase
         .from('business_hours')
-        .upsert({
-          day_type: hourData.day_type,
-          time_slots: hourData.time_slots,
-          is_closed: hourData.is_closed,
-          updated_at: new Date().toISOString()
-        })
-        .select()
+        .select('id')
+        .eq('day_type', hourData.day_type)
+        .single()
 
-      if (error) throw error
+      let result
+      if (existing) {
+        // Actualizar registro existente
+        const { data, error } = await supabase
+          .from('business_hours')
+          .update({
+            time_slots: hourData.time_slots,
+            is_closed: hourData.is_closed,
+            updated_at: new Date().toISOString()
+          })
+          .eq('day_type', hourData.day_type)
+          .select()
+
+        if (error) throw error
+        result = data
+      } else {
+        // Crear nuevo registro
+        const { data, error } = await supabase
+          .from('business_hours')
+          .insert({
+            day_type: hourData.day_type,
+            time_slots: hourData.time_slots,
+            is_closed: hourData.is_closed
+          })
+          .select()
+
+        if (error) throw error
+        result = data
+      }
 
       await fetchBusinessHours()
-      return data
+      return result
     } catch (err) {
       console.error('Error saving business hours:', err)
       setError(err instanceof Error ? err.message : 'Error saving business hours')
