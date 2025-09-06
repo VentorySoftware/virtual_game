@@ -2,7 +2,7 @@ import { Gamepad2, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Youtube } 
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Badge } from "@/components/ui/badge"
 
-import { useSiteSettings } from '@/contexts/SiteSettingsContext'
+import { useSiteSettings } from '@/hooks/useSiteSettings'
 
 const Footer = () => {
   const { settings, loading } = useSiteSettings()

@@ -25,19 +25,27 @@ export const useSiteSettings = () => {
         .from('site_settings')
         .select('key, value')
 
-      if (error) throw error
+      if (error) {
+        console.error('Error fetching site settings:', error)
+        setSettings({}) // Set empty settings on error
+        return
+      }
       
       // Convert array of settings to object
-      
       const settingsObj: Partial<SiteSettings> = {}
       
-      data?.forEach((setting: any) => {
-        settingsObj[setting.key as keyof SiteSettings] = setting.value
-      })
+      if (data && Array.isArray(data)) {
+        data.forEach((setting: any) => {
+          if (setting && setting.key && setting.value) {
+            settingsObj[setting.key as keyof SiteSettings] = setting.value
+          }
+        })
+      }
       
       setSettings(settingsObj)
     } catch (error) {
       console.error('Error fetching site settings:', error)
+      setSettings({}) // Set empty settings on error
     } finally {
       setLoading(false)
     }

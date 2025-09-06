@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { SiteSettingsProvider } from "@/contexts/SiteSettingsContext";
 import Index from "./pages/Index";
 import Categories from "./pages/Categories";
 import ProductDetail from "./pages/ProductDetail";
@@ -36,10 +35,9 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <SiteSettingsProvider>
-        <AuthProvider>
-          <CartProvider>
-            <TooltipProvider>
+      <AuthProvider>
+        <CartProvider>
+          <TooltipProvider>
             <Toaster />
             <Sonner />
             <BrowserRouter>
@@ -70,10 +68,9 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-          </TooltipProvider>
-        </CartProvider>
-      </AuthProvider>
-      </SiteSettingsProvider>
+        </TooltipProvider>
+      </CartProvider>
+    </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

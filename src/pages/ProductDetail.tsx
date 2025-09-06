@@ -19,7 +19,7 @@ import {
   ArrowLeft,
   MessageCircle
 } from "lucide-react"
-import { useSiteSettings } from "@/contexts/SiteSettingsContext"
+import { useSiteSettings } from "@/hooks/useSiteSettings"
 import { useFavorites } from "@/hooks/useFavorites"
 
 const ProductDetail = () => {
