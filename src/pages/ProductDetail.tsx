@@ -19,7 +19,7 @@ import {
   ArrowLeft,
   MessageCircle
 } from "lucide-react"
-import { useSiteSettings } from "@/hooks/useSiteSettings"
+import { useSiteSettings } from "@/contexts/SiteSettingsContext"
 
 const ProductDetail = () => {
   const { slug } = useParams()

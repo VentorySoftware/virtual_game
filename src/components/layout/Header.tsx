@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useCart } from "@/contexts/CartContext"
 import { CartDrawer } from "@/components/cart/CartDrawer"
 import { supabase } from "@/integrations/supabase/client"
-import { useSiteSettings } from "@/hooks/useSiteSettings"
+import { useSiteSettings } from "@/contexts/SiteSettingsContext"
 import {
   DropdownMenu,
   DropdownMenuContent,
