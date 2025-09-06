@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useBusinessHours } from '@/hooks/useBusinessHours'
-import { Clock, Plus, Trash2, Save, AlertCircle } from 'lucide-react'
+import { useBusinessHours, type BusinessHourInput } from '@/hooks/useBusinessHours'
+import { Clock, Plus, Trash2, Save, CheckCircle } from 'lucide-react'
+import { useNotifications } from '@/hooks/useNotifications'
 import AdminLayout from '@/components/admin/AdminLayout'
 
 type TimeSlot = {
@@ -15,8 +16,9 @@ type TimeSlot = {
 }
 
 const BusinessHoursAdmin = () => {
-  const { businessHours, loading, saveBusinessHour, deleteBusinessHour } = useBusinessHours()
-
+  const { businessHours, loading, saveBusinessHour, deleteBusinessHour, getBusinessHoursByDay } = useBusinessHours()
+  const notifications = useNotifications()
+  
   const [editingHours, setEditingHours] = useState<{
     [key: string]: {
       time_slots: TimeSlot[]
@@ -32,7 +34,11 @@ const BusinessHoursAdmin = () => {
   ]
 
   const getCurrentHours = (dayType: string) => {
-    return {
+    const existing = getBusinessHoursByDay(dayType)
+    return existing ? {
+      time_slots: existing.time_slots,
+      is_closed: existing.is_closed
+    } : {
       time_slots: [{ start: '09:00', end: '18:00' }],
       is_closed: false
     }
@@ -82,7 +88,16 @@ const BusinessHoursAdmin = () => {
         time_slots: hours.time_slots,
         is_closed: hours.is_closed
       })
+      
+      // Clear editing state for this day
+      setEditingHours(prev => {
+        const { [dayType]: _, ...rest } = prev
+        return rest
+      })
+      
+      notifications.success('Horarios guardados exitosamente')
     } catch (error) {
+      notifications.error('Error al guardar los horarios')
       console.error('Error saving business hours:', error)
     }
   }
@@ -99,14 +114,13 @@ const BusinessHoursAdmin = () => {
         </div>
 
         <div className="max-w-4xl mx-auto">
-          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
+          <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5" />
               <div>
-                <h3 className="font-semibold text-amber-800 dark:text-amber-200">Funcionalidad en desarrollo</h3>
-                <p className="text-amber-700 dark:text-amber-300 text-sm mt-1">
-                  La gestión de horarios de atención estará disponible próximamente. 
-                  Por ahora puedes configurar esta información en la configuración general del sitio.
+                <h3 className="font-semibold text-green-800 dark:text-green-200">Gestión de Horarios Activa</h3>
+                <p className="text-green-700 dark:text-green-300 text-sm mt-1">
+                  Configura los horarios de atención para diferentes días de la semana. Los cambios se guardarán automáticamente.
                 </p>
               </div>
             </div>

@@ -184,6 +184,33 @@ export type Database = {
           },
         ]
       }
+      business_hours: {
+        Row: {
+          created_at: string
+          day_type: string
+          id: string
+          is_closed: boolean
+          time_slots: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_type: string
+          id?: string
+          is_closed?: boolean
+          time_slots?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_type?: string
+          id?: string
+          is_closed?: boolean
+          time_slots?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cart_items: {
         Row: {
           bundle_id: string | null
