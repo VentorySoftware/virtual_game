@@ -28,6 +28,7 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [quantity, setQuantity] = useState(1)
+  const { settings } = useSiteSettings()
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -102,9 +103,6 @@ const ProductDetail = () => {
     'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop',
     'https://images.unsplash.com/photo-1614728263952-84ea256f9679?w=800&h=600&fit=crop'
   ]
-
-  // ...
-  const { settings } = useSiteSettings()
 
   const whatsappMessage = `Hola! Me interesa el juego *${product.title}* (${platformName}) por $${product.price.toLocaleString('es-AR')}. ¿Podrían darme más información?`
   let whatsappNumber = settings.whatsapp_number || ''
