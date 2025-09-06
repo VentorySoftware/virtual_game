@@ -36,12 +36,12 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <AuthProvider>
-        <CartProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-            <Routes>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <CartProvider>
+              <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/profile" element={<Profile />} />
@@ -66,11 +66,11 @@ const App = () => (
               <Route path="/deals" element={<Deals />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
+              </Routes>
+            </CartProvider>
           </BrowserRouter>
         </TooltipProvider>
-      </CartProvider>
-    </AuthProvider>
+      </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
