@@ -1,16 +1,63 @@
-import { Gamepad2, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Youtube } from "lucide-react"
+import { Gamepad2, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Youtube, Clock } from "lucide-react"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Badge } from "@/components/ui/badge"
 
 import { useSiteSettings } from '@/hooks/useSiteSettings'
+import { useBusinessHours } from '@/hooks/useBusinessHours'
 
 const Footer = () => {
   const { settings, loading } = useSiteSettings()
+  const { businessHours, loading: hoursLoading } = useBusinessHours()
   const currentYear = new Date().getFullYear()
 
   const address = settings.contact_address || 'Buenos Aires, Argentina'
   const phone = settings.whatsapp_number || '+54 9 11 1234-5678'
   const email = settings.contact_email || 'soporte@virtualgame.com'
+
+  const formatBusinessHours = () => {
+    if (hoursLoading || !businessHours.length) {
+      return (
+        <div className="space-y-1 text-sm text-muted-foreground">
+          <p>Lunes a Viernes: 9:00 - 18:00</p>
+          <p>Sábados: 9:00 - 14:00</p>
+          <p>Domingos: Cerrado</p>
+        </div>
+      )
+    }
+
+    return (
+      <div className="space-y-1 text-sm text-muted-foreground">
+        {businessHours.map((dayHour) => {
+          const dayTypeMap: { [key: string]: string } = {
+            'lunes a viernes': 'Lunes a Viernes',
+            'sabados': 'Sábados', 
+            'domingo': 'Domingos',
+            'feriados': 'Feriados'
+          }
+
+          const displayName = dayTypeMap[dayHour.day_type] || dayHour.day_type
+
+          if (dayHour.is_closed || !dayHour.time_slots?.length) {
+            return (
+              <p key={dayHour.id}>
+                {displayName}: <span className="text-muted-foreground/70">Cerrado</span>
+              </p>
+            )
+          }
+
+          const timeSlotText = dayHour.time_slots
+            .map(slot => `${slot.start} - ${slot.end}`)
+            .join(', ')
+
+          return (
+            <p key={dayHour.id}>
+              {displayName}: {timeSlotText}
+            </p>
+          )
+        })}
+      </div>
+    )
+  }
 
   return (
     <footer className="bg-gradient-dark border-t border-primary/20 relative overflow-hidden">
@@ -117,15 +164,23 @@ const Footer = () => {
           {/* Horarios de Atención */}
           <div className="space-y-6">
             <div className="cyber-card p-4">
-              <h4 className="font-semibold mb-2 text-primary">Horarios de Atención</h4>
-              <div className="space-y-1 text-sm text-muted-foreground">
-                <p>Lunes a Viernes: 9:00 - 22:00</p>
-                <p>Sábados: 10:00 - 20:00</p>
-                <p>Domingos: 12:00 - 18:00</p>
+              <div className="flex items-center gap-2 mb-3">
+                <Clock className="h-4 w-4 text-primary" />
+                <h4 className="font-semibold text-primary">Horarios de Atención</h4>
               </div>
-              <Badge className="mt-3 bg-secondary/20 text-secondary">
-                Chat en vivo disponible
-              </Badge>
+              
+              {formatBusinessHours()}
+              
+              <div className="mt-3 space-y-2">
+                <Badge className="bg-secondary/20 text-secondary">
+                  Chat en vivo disponible
+                </Badge>
+                {hoursLoading && (
+                  <Badge variant="outline" className="border-primary/50 text-primary/70">
+                    Cargando horarios...
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
         </div>
