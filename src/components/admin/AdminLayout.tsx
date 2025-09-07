@@ -38,6 +38,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { name: 'Promociones', href: '/admin/promotions', icon: Megaphone },
     { name: 'Medios de Pago', href: '/admin/payment-methods', icon: CreditCard },
     { name: 'Pedidos', href: '/admin/orders', icon: ShoppingCart },
+    { name: 'Gestión de packs', href: '/admin/packs', icon: Package },
     { name: 'Usuarios', href: '/admin/users', icon: Users },
     { name: 'Reseñas', href: '/admin/reviews', icon: MessageSquare },
     { name: 'Horarios', href: '/admin/business-hours', icon: Clock },

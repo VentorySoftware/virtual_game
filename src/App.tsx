@@ -30,6 +30,7 @@ import UsersAdmin from "./pages/admin/Users";
 import SettingsAdmin from "./pages/admin/Settings";
 import BusinessHoursAdmin from "./pages/admin/BusinessHours";
 import ReviewsAdmin from "./pages/admin/Reviews";
+import PackManagement from "./pages/admin/PackManagement";
 import NotFound from "./pages/NotFound";
 import BundleDetail from "./pages/BundleDetail";
 
@@ -64,6 +65,7 @@ const App = () => (
               <Route path="/admin/business-hours" element={<BusinessHoursAdmin />} />
               <Route path="/admin/settings" element={<SettingsAdmin />} />
               <Route path="/admin/reviews" element={<ReviewsAdmin />} />
+              <Route path="/admin/packs" element={<PackManagement />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/catalog" element={<Catalog />} />
               <Route path="/product/:slug" element={<ProductDetail />} />
