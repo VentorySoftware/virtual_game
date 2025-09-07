@@ -265,8 +265,8 @@ const Bundles = () => {
                       {/* Pricing */}
                       <div className="space-y-3 p-4 rounded-lg bg-secondary/5 border border-secondary/20">
                         <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">Precio individual:</span>
-                          <span className="line-through text-muted-foreground">
+                          <span className="text-muted-foreground">Precio total:</span>
+                          <span className="text-muted-foreground">
                             ${bundle.original_total?.toLocaleString('es-AR') || '0'}
                           </span>
                         </div>

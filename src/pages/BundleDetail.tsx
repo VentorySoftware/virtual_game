@@ -49,11 +49,18 @@ const BundleDetail = () => {
     )
   }
 
-  const savings = bundle.original_total && bundle.bundle_price
-    ? bundle.original_total - bundle.bundle_price
+  // Definitive fix: Calculate importe total as simple sum of product prices * quantities
+  const originalTotal = bundle.bundle_items?.reduce((sum, item) => {
+    const price = item.product?.price || 0
+    const quantity = item.quantity || 1
+    return sum + price * quantity
+  }, 0) || 0
+
+  const savings = originalTotal && bundle.bundle_price
+    ? originalTotal - bundle.bundle_price
     : 0
-  const savingsPercentage = bundle.original_total
-    ? Math.round((savings / bundle.original_total) * 100)
+  const savingsPercentage = originalTotal
+    ? Math.round((savings / originalTotal) * 100)
     : 0
 
   return (
@@ -148,7 +155,7 @@ const BundleDetail = () => {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Precio individual:</span>
-                    <span className="line-through text-muted-foreground">
+                    <span className="text-muted-foreground">
                       ${bundle.original_total?.toLocaleString('es-AR') || '0'}
                     </span>
                   </div>

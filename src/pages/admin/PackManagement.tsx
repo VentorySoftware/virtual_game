@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Calendar } from "lucide-react"
 import { usePlatforms } from "@/hooks/usePlatforms"
 import { useProducts } from "@/hooks/useProducts"
@@ -52,6 +53,8 @@ const PackManagement = () => {
   const [loading, setLoading] = useState(true)
   const [selectedPack, setSelectedPack] = useState<Pack | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all')
+  const [packToDelete, setPackToDelete] = useState<Pack | null>(null)
 
   // Form state
   const [name, setName] = useState("")
@@ -65,12 +68,12 @@ const PackManagement = () => {
   // Filter products by selected platform
   const filteredProducts = useMemo(() => {
     if (!platformId) return []
-    return products.filter(p => p.platform_id === platformId)
+    return products.filter(p => p.platform.id === platformId)
   }, [platformId, products])
 
   useEffect(() => {
     fetchPacks()
-  }, [])
+  }, [filter])
 
   useEffect(() => {
     if (selectedPack) {
@@ -99,7 +102,7 @@ const PackManagement = () => {
   const fetchPacks = async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("product_bundles")
         .select(`
           id,
@@ -128,6 +131,14 @@ const PackManagement = () => {
         `)
         .order("created_at", { ascending: false })
 
+      if (filter === 'active') {
+        query = query.eq('is_active', true)
+      } else if (filter === 'inactive') {
+        query = query.eq('is_active', false)
+      }
+
+      const { data, error } = await query
+
       if (error) throw error
       setPacks(data || [])
     } catch (error) {
@@ -144,7 +155,47 @@ const PackManagement = () => {
       return
     }
 
+    if (selectedProductIds.size === 0) {
+      notifications.error("Debe seleccionar al menos un producto")
+      return
+    }
+
     try {
+      // Get product prices from database to ensure accuracy
+      const { data: selectedProductsData, error: productsError } = await supabase
+        .from("products")
+        .select("id, price")
+        .in("id", Array.from(selectedProductIds))
+
+      if (productsError) {
+        console.error("Error fetching product prices:", productsError)
+        throw productsError
+      }
+
+      // Calculate total price from database data (sum of product prices without discount)
+      const totalPrice = selectedProductsData.reduce((sum, product) => {
+        // Quantity is always 1 as per current logic
+        return sum + product.price
+      }, 0)
+
+      // Calculate bundle price applying discount on total price
+      const bundlePrice = Math.round(totalPrice * (1 - discountPercentage / 100))
+
+      console.log("Price calculation:", {
+        selectedProducts: selectedProductsData.length,
+        totalPrice,
+        discountPercentage,
+        bundlePrice
+      })
+
+      // Additional validation logs
+      if (totalPrice <= 0) {
+        console.warn("Warning: totalPrice is zero or negative, check product prices and selection.")
+      }
+      if (bundlePrice < 0) {
+        console.warn("Warning: bundlePrice is negative, check discountPercentage value.")
+      }
+
       let packId = selectedPack?.id
 
       if (packId) {
@@ -158,6 +209,8 @@ const PackManagement = () => {
             valid_until: validUntil || null,
             platform_id: platformId,
             discount_percentage: discountPercentage,
+            bundle_price: bundlePrice,
+            original_total: totalPrice,
           })
           .eq("id", packId)
 
@@ -191,7 +244,8 @@ const PackManagement = () => {
           valid_until: validUntil || null,
           platform_id: platformId,
           discount_percentage: discountPercentage,
-          bundle_price: 0, // Added default value to satisfy NOT NULL constraint
+          bundle_price: bundlePrice,
+          original_total: totalPrice,
         }
 
         console.log("Inserting pack with data:", packData)
@@ -246,6 +300,31 @@ const PackManagement = () => {
     setSelectedProductIds(newSet)
   }
 
+  const deletePack = async (pack: Pack) => {
+    try {
+      await supabase.from("product_bundles").delete().eq("id", pack.id)
+      notifications.success("Pack eliminado correctamente")
+      fetchPacks()
+    } catch (error) {
+      notifications.error("Error al eliminar el pack")
+    }
+    setPackToDelete(null)
+  }
+
+  const toggleVisibility = async (pack: Pack) => {
+    try {
+      const { error } = await supabase
+        .from("product_bundles")
+        .update({ is_active: !pack.is_active })
+        .eq("id", pack.id)
+      if (error) throw error
+      notifications.success("Visibilidad actualizada")
+      fetchPacks()
+    } catch (error) {
+      notifications.error("Error al actualizar visibilidad")
+    }
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -254,9 +333,22 @@ const PackManagement = () => {
           <p className="text-muted-foreground">Administra los packs de productos, crea, edita y limita su visibilidad.</p>
         </div>
 
-        <CyberButton onClick={() => { setSelectedPack(null); setIsDialogOpen(true); }}>
-          Nuevo pack
-        </CyberButton>
+        <div className="flex justify-between items-center">
+          <CyberButton onClick={() => { setSelectedPack(null); setIsDialogOpen(true); }}>
+            Nuevo pack
+          </CyberButton>
+
+          <Select value={filter} onValueChange={(value: 'all' | 'active' | 'inactive') => setFilter(value)}>
+            <SelectTrigger className="w-48 border border-border bg-input text-foreground rounded-md">
+              <SelectValue placeholder="Filtrar por estado" />
+            </SelectTrigger>
+            <SelectContent className="bg-background text-foreground">
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="active">Activos</SelectItem>
+              <SelectItem value="inactive">Inactivos</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
         <Card className="cyber-card">
           <CardHeader>
@@ -288,9 +380,35 @@ const PackManagement = () => {
                       <TableCell>{pack.is_active ? "Sí" : "No"}</TableCell>
                       <TableCell>{pack.discount_percentage}%</TableCell>
                       <TableCell>
-                        <CyberButton size="sm" variant="outline" onClick={() => { setSelectedPack(pack); setIsDialogOpen(true); }}>
-                          Editar
-                        </CyberButton>
+                        <div className="flex space-x-2">
+                          <CyberButton size="sm" variant="outline" onClick={() => { setSelectedPack(pack); setIsDialogOpen(true); }}>
+                            Editar
+                          </CyberButton>
+                          <CyberButton size="sm" variant="outline" onClick={() => toggleVisibility(pack)}>
+                            {pack.is_active ? "Ocultar" : "Mostrar"}
+                          </CyberButton>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="destructive">
+                                Eliminar
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta acción no se puede deshacer. Esto eliminará permanentemente el pack "{pack.name}".
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => deletePack(pack)}>
+                                  Eliminar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
