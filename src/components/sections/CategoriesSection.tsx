@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Gamepad2, Monitor, Smartphone, Clock } from "lucide-react"
-import platformsImage from "@/assets/gaming-platforms.jpg"
 
 const categories = [
   {
@@ -10,17 +9,15 @@ const categories = [
     icon: Gamepad2,
     count: "1,250+ juegos",
     color: "text-primary",
-    bgColor: "bg-primary/10",
-    description: "PS4 • PS5 • Exclusivos"
+    bgColor: "bg-primary/10"
   },
   {
     id: 2,
     name: "Xbox",
     icon: Monitor,
-    count: "980+ juegos", 
+    count: "980+ juegos",
     color: "text-secondary",
-    bgColor: "bg-secondary/10",
-    description: "Xbox One • Series X/S"
+    bgColor: "bg-secondary/10"
   },
   {
     id: 3,
@@ -28,8 +25,7 @@ const categories = [
     icon: Gamepad2,
     count: "750+ juegos",
     color: "text-accent",
-    bgColor: "bg-accent/10", 
-    description: "Switch • Exclusivos"
+    bgColor: "bg-accent/10"
   },
   {
     id: 4,
@@ -37,17 +33,15 @@ const categories = [
     icon: Monitor,
     count: "2,500+ juegos",
     color: "text-primary",
-    bgColor: "bg-primary/10",
-    description: "Steam • Epic • Origin"
+    bgColor: "bg-primary/10"
   },
   {
     id: 5,
     name: "Mobile",
     icon: Smartphone,
     count: "500+ juegos",
-    color: "text-secondary", 
-    bgColor: "bg-secondary/10",
-    description: "iOS • Android • Premium"
+    color: "text-secondary",
+    bgColor: "bg-secondary/10"
   },
   {
     id: 6,
@@ -55,8 +49,7 @@ const categories = [
     icon: Clock,
     count: "300+ juegos",
     color: "text-accent",
-    bgColor: "bg-accent/10",
-    description: "PS3 • Clásicos • Nostalgia"
+    bgColor: "bg-accent/10"
   }
 ]
 
@@ -108,9 +101,6 @@ const CategoriesSection = () => {
                     <h3 className="text-xl font-semibold font-orbitron group-hover:text-primary transition-colors">
                       {category.name}
                     </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {category.description}
-                    </p>
                   </div>
 
                   <CyberButton 
@@ -126,32 +116,7 @@ const CategoriesSection = () => {
           })}
         </div>
 
-        {/* Featured Platforms Banner */}
-        <div className="relative rounded-2xl overflow-hidden cyber-border">
-          <img 
-            src={platformsImage} 
-            alt="Gaming Platforms" 
-            className="w-full h-64 object-cover opacity-30"
-          />
-          <div className="absolute inset-0 bg-gradient-cyber opacity-70" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center space-y-6">
-              <h3 className="text-2xl md:text-4xl font-bold font-orbitron text-white">
-                Compatibilidad Total
-              </h3>
-              <p className="text-lg text-white/80 max-w-lg">
-                Juegos verificados y compatibles con todas las plataformas más populares
-              </p>
-              <div className="flex flex-wrap justify-center gap-4">
-                <Badge className="bg-white/20 text-white border-white/30">PlayStation</Badge>
-                <Badge className="bg-white/20 text-white border-white/30">Xbox</Badge>
-                <Badge className="bg-white/20 text-white border-white/30">Nintendo</Badge>
-                <Badge className="bg-white/20 text-white border-white/30">PC</Badge>
-                <Badge className="bg-white/20 text-white border-white/30">Mobile</Badge>
-              </div>
-            </div>
-          </div>
-        </div>
+
       </div>
     </section>
   )

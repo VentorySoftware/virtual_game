@@ -96,24 +96,7 @@ const Categories = () => {
         </section>
 
         {/* Platforms */}
-        <section className="space-y-6">
-          <h2 className="text-2xl font-bold font-orbitron text-center">
-            Plataformas <span className="text-secondary">Disponibles</span>
-          </h2>
-          
-          <div className="flex flex-wrap justify-center gap-3">
-            {platforms.map((platform) => (
-              <Badge 
-                key={platform.id}
-                variant="outline" 
-                className="px-4 py-2 cursor-pointer hover:border-primary hover:text-primary transition-colors"
-                style={{ borderColor: platform.color + '40', color: platform.color }}
-              >
-                {platform.name}
-              </Badge>
-            ))}
-          </div>
-        </section>
+        {/* Section removed to hide platform badges as requested */}
 
         {/* Products Section */}
         <section className="space-y-6">

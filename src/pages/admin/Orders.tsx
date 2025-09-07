@@ -491,203 +491,207 @@ const OrdersAdmin = () => {
           </CardContent>
         </Card>
 
-        {/* Orders List */}
-        {filteredOrders.length === 0 ? (
-          <Card className="cyber-card">
-            <CardContent className="flex flex-col items-center justify-center py-16 space-y-4">
-              <Package className="h-16 w-16 text-muted-foreground" />
-              <div className="text-center">
-                <h3 className="text-lg font-semibold mb-2">No se encontraron pedidos</h3>
-                <p className="text-muted-foreground">
-                  {searchTerm || statusFilter !== "all" ? 'Intenta con otros filtros' : 'Aún no hay pedidos registrados'}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {/* Sorting Controls */}
-            <Card className="cyber-card">
-              <CardContent className="p-4">
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSort('order_number')}
-                    className="cyber-border"
-                  >
-                    Número
-                    {sortBy === 'order_number' && (
-                      sortOrder === 'asc' ? <ArrowUp className="h-4 w-4 ml-1" /> : <ArrowDown className="h-4 w-4 ml-1" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSort('created_at')}
-                    className="cyber-border"
-                  >
-                    Fecha
-                    {sortBy === 'created_at' && (
-                      sortOrder === 'asc' ? <ArrowUp className="h-4 w-4 ml-1" /> : <ArrowDown className="h-4 w-4 ml-1" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSort('total')}
-                    className="cyber-border"
-                  >
-                    Total
-                    {sortBy === 'total' && (
-                      sortOrder === 'asc' ? <ArrowUp className="h-4 w-4 ml-1" /> : <ArrowDown className="h-4 w-4 ml-1" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSort('status')}
-                    className="cyber-border"
-                  >
-                    Estado
-                    {sortBy === 'status' && (
-                      sortOrder === 'asc' ? <ArrowUp className="h-4 w-4 ml-1" /> : <ArrowDown className="h-4 w-4 ml-1" />
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Orders Cards */}
-            <div className="space-y-4">
-              {paginatedOrders.map((order) => (
-                <Card key={order.id} className="cyber-card hover:shadow-glow-primary transition-all">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                      {/* Order Info */}
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                          <h3 className="font-bold text-lg">#{order.order_number}</h3>
-                          {getStatusBadge(order.status)}
-                        </div>
-
-                        <div className="space-y-1 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            <span>{formatDate(order.created_at)}</span>
-                          </div>
-                          <p>
-                            Cliente: {order.profiles?.email || order.billing_info?.email || 'Email no disponible'}
-                          </p>
-                          {order.profiles?.first_name && (
-                            <p>
-                              Nombre: {order.profiles.first_name} {order.profiles.last_name}
-                            </p>
-                          )}
-                          <p>
-                            {order.order_items.length} producto(s) - Total: {' '}
-                            <span className="font-bold neon-text">
-                              {formatPrice(Number(order.total))}
-                            </span>
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <Select
-                          value={order.status}
-                          onValueChange={(value) => updateOrderStatus(order.id, value as any)}
-                        >
-                          <SelectTrigger className="w-full sm:w-36 cyber-border">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="draft">Pendiente</SelectItem>
-                            <SelectItem value="pending">Pendiente de Pago</SelectItem>
-                            <SelectItem value="paid">Pagado</SelectItem>
-                            <SelectItem value="verifying">Verificando</SelectItem>
-                            <SelectItem value="delivered">Entregado</SelectItem>
-                            <SelectItem value="cancelled">Cancelado</SelectItem>
-                          </SelectContent>
-                        </Select>
-
-                        <CyberButton
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openOrderDetails(order)}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Ver Detalles
-                        </CyberButton>
-                      </div>
-                    </div>
-
-                    {/* Order Items Preview */}
-                    <div className="mt-4 pt-4 border-t border-primary/20">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
-                        {order.order_items.slice(0, 3).map((item) => (
-                          <div key={item.id} className="flex justify-between bg-card/30 px-3 py-2 rounded border border-primary/10">
-                            <span className="truncate">{item.product_name}</span>
-                            <span className="text-muted-foreground">x{item.quantity}</span>
-                          </div>
-                        ))}
-                        {order.order_items.length > 3 && (
-                          <div className="flex items-center justify-center bg-card/30 px-3 py-2 rounded border border-primary/10 text-muted-foreground">
-                            +{order.order_items.length - 3} más
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+        {/* Orders Table View */}
+        <Card className="cyber-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Lista de Pedidos
+            </CardTitle>
+            <div className="text-sm text-muted-foreground">
+              {filteredOrders.length === 0
+                ? (searchTerm || statusFilter !== "all" ? 'No se encontraron pedidos con los filtros aplicados' : 'Aún no hay pedidos registrados')
+                : `Mostrando ${paginatedOrders.length} de ${filteredOrders.length} pedidos`
+              }
             </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <Card className="cyber-card">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-muted-foreground">
-                      Mostrando {((currentPage - 1) * pageSize) + 1} a {Math.min(currentPage * pageSize, sortedOrders.length)} de {sortedOrders.length} pedidos
-                    </div>
-                    <Pagination>
-                      <PaginationContent>
-                        <PaginationItem>
-                          <PaginationPrevious
-                            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                            className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                          />
-                        </PaginationItem>
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                          const pageNumber = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i
-                          return (
-                            <PaginationItem key={pageNumber}>
-                              <PaginationLink
-                                onClick={() => setCurrentPage(pageNumber)}
-                                isActive={currentPage === pageNumber}
-                                className="cursor-pointer"
+          </CardHeader>
+          <CardContent className="p-0">
+            {filteredOrders.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                <Package className="h-16 w-16 text-muted-foreground" />
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold mb-2">No se encontraron pedidos</h3>
+                  <p className="text-muted-foreground">
+                    {searchTerm || statusFilter !== "all" ? 'Intenta con otros filtros' : 'Aún no hay pedidos registrados'}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-b border-primary/20">
+                        <TableHead className="w-[120px] min-w-[120px]">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleSort('order_number')}
+                            className="h-auto p-0 font-medium hover:bg-transparent text-left"
+                          >
+                            Número
+                            {sortBy === 'order_number' && (
+                              sortOrder === 'asc' ? <ArrowUp className="h-4 w-4 ml-1 inline" /> : <ArrowDown className="h-4 w-4 ml-1 inline" />
+                            )}
+                          </Button>
+                        </TableHead>
+                        <TableHead className="w-[140px] min-w-[140px]">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleSort('created_at')}
+                            className="h-auto p-0 font-medium hover:bg-transparent text-left"
+                          >
+                            Fecha
+                            {sortBy === 'created_at' && (
+                              sortOrder === 'asc' ? <ArrowUp className="h-4 w-4 ml-1 inline" /> : <ArrowDown className="h-4 w-4 ml-1 inline" />
+                            )}
+                          </Button>
+                        </TableHead>
+                        <TableHead className="min-w-[200px] hidden md:table-cell">
+                          Cliente
+                        </TableHead>
+                        <TableHead className="w-[120px] min-w-[120px]">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleSort('status')}
+                            className="h-auto p-0 font-medium hover:bg-transparent text-left"
+                          >
+                            Estado
+                            {sortBy === 'status' && (
+                              sortOrder === 'asc' ? <ArrowUp className="h-4 w-4 ml-1 inline" /> : <ArrowDown className="h-4 w-4 ml-1 inline" />
+                            )}
+                          </Button>
+                        </TableHead>
+                        <TableHead className="w-[120px] min-w-[120px] text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleSort('total')}
+                            className="h-auto p-0 font-medium hover:bg-transparent"
+                          >
+                            Total
+                            {sortBy === 'total' && (
+                              sortOrder === 'asc' ? <ArrowUp className="h-4 w-4 ml-1 inline" /> : <ArrowDown className="h-4 w-4 ml-1 inline" />
+                            )}
+                          </Button>
+                        </TableHead>
+                        <TableHead className="w-[200px] min-w-[200px]">
+                          Acciones
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedOrders.map((order) => (
+                        <TableRow key={order.id} className="hover:bg-muted/50 border-b border-primary/10">
+                          <TableCell className="font-medium font-mono">
+                            #{order.order_number}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium">{formatDate(order.created_at).split(',')[0]}</span>
+                              <span className="text-xs text-muted-foreground">{formatDate(order.created_at).split(',')[1]}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium">
+                                {order.profiles?.first_name && order.profiles?.last_name
+                                  ? `${order.profiles.first_name} ${order.profiles.last_name}`
+                                  : order.profiles?.email || order.billing_info?.email || 'N/A'
+                                }
+                              </span>
+                              <span className="text-xs text-muted-foreground truncate max-w-[180px]">
+                                {order.profiles?.email || order.billing_info?.email}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {getStatusBadge(order.status)}
+                          </TableCell>
+                          <TableCell className="text-right font-medium font-mono">
+                            {formatPrice(Number(order.total))}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <Select
+                                value={order.status}
+                                onValueChange={(value) => updateOrderStatus(order.id, value as any)}
                               >
-                                {pageNumber}
-                              </PaginationLink>
-                            </PaginationItem>
-                          )
-                        })}
-                        <PaginationItem>
-                          <PaginationNext
-                            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                          />
-                        </PaginationItem>
-                      </PaginationContent>
-                    </Pagination>
+                                <SelectTrigger className="w-full sm:w-32 h-8 text-xs cyber-border">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="draft">Pendiente</SelectItem>
+                                  <SelectItem value="pending">Pendiente de Pago</SelectItem>
+                                  <SelectItem value="paid">Pagado</SelectItem>
+                                  <SelectItem value="verifying">Verificando</SelectItem>
+                                  <SelectItem value="delivered">Entregado</SelectItem>
+                                  <SelectItem value="cancelled">Cancelado</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <CyberButton
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openOrderDetails(order)}
+                                className="h-8 text-xs"
+                              >
+                                <Eye className="h-3 w-3 mr-1" />
+                                Ver
+                              </CyberButton>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="border-t border-primary/20 p-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="text-sm text-muted-foreground">
+                        Mostrando {((currentPage - 1) * pageSize) + 1} a {Math.min(currentPage * pageSize, sortedOrders.length)} de {sortedOrders.length} pedidos
+                      </div>
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                              className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                            />
+                          </PaginationItem>
+                          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            const pageNumber = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i
+                            return (
+                              <PaginationItem key={pageNumber}>
+                                <PaginationLink
+                                  onClick={() => setCurrentPage(pageNumber)}
+                                  isActive={currentPage === pageNumber}
+                                  className="cursor-pointer"
+                                >
+                                  {pageNumber}
+                                </PaginationLink>
+                              </PaginationItem>
+                            )
+                          })}
+                          <PaginationItem>
+                            <PaginationNext
+                              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                              className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                )}
+              </>
             )}
-          </div>
-        )}
+          </CardContent>
+        </Card>
 
         {/* Order Details Modal */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -778,7 +782,7 @@ const OrdersAdmin = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         {Object.entries(selectedOrder.billing_info).map(([key, value]) => (
                           <div key={key}>
-                            <strong className="capitalize">{key.replace(/_/g, ' ')}:</strong> {value || 'N/A'}
+                            <strong className="capitalize">{key.replace(/_/g, ' ')}:</strong> {String(value) || 'N/A'}
                           </div>
                         ))}
                       </div>
