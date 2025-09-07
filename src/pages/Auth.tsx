@@ -9,6 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
 
+const validGenders = [
+  'Hombre',
+  'Mujer',
+  'Otro / No binario',
+  'Prefiero no decirlo',
+]
+
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
@@ -59,6 +66,15 @@ const Auth = () => {
           navigate(returnUrl)
         }
       } else {
+        if (!validGenders.includes(formData.gender)) {
+          toast({
+            title: "Error de registro",
+            description: "El género seleccionado no es válido.",
+            variant: "destructive",
+          })
+          setLoading(false)
+          return
+        }
         const { error } = await signUp(
           formData.email,
           formData.password,
