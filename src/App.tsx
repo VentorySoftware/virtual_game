@@ -29,7 +29,6 @@ import OrdersAdmin from "./pages/admin/Orders";
 import UsersAdmin from "./pages/admin/Users";
 import SettingsAdmin from "./pages/admin/Settings";
 import BusinessHoursAdmin from "./pages/admin/BusinessHours";
-import AdminMyOrders from "./pages/admin/MyOrders";
 import ReviewsAdmin from "./pages/admin/Reviews";
 import NotFound from "./pages/NotFound";
 
@@ -59,7 +58,7 @@ const App = () => (
               <Route path="/admin/promotions" element={<PromotionsAdmin />} />
               <Route path="/admin/payment-methods" element={<PaymentMethodsAdmin />} />
               <Route path="/admin/orders" element={<OrdersAdmin />} />
-              <Route path="/admin/my-orders" element={<AdminMyOrders />} />
+              {/* Removed route for admin "Mis Pedidos" */}
               <Route path="/admin/users" element={<UsersAdmin />} />
               <Route path="/admin/business-hours" element={<BusinessHoursAdmin />} />
               <Route path="/admin/settings" element={<SettingsAdmin />} />

@@ -1,3 +1,9 @@
-# TODO List for Adding Redirect to "Ver Pre-órdenes" Button
+# TODO: Remover módulo "Mis Pedidos" del panel de administración
 
-- [x] Edit HeroSection.tsx to add onClick handler to "Ver Pre-órdenes" button for navigation to "/pre-orders"
+## Tareas completadas:
+- [x] Remover item de navegación "Mis Pedidos" del AdminLayout.tsx
+- [x] Remover ruta '/admin/my-orders' del App.tsx
+- [x] Remover importación AdminMyOrders del App.tsx
+- [x] Eliminar archivo src/pages/admin/MyOrders.tsx
+
+## Estado: Completado ✅
