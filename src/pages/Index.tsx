@@ -4,6 +4,7 @@ import WhatsAppWidget from "@/components/widgets/WhatsAppWidget"
 import HeroSection from "@/components/sections/HeroSection"
 import FeaturedProducts from "@/components/sections/FeaturedProducts"
 import CategoriesSection from "@/components/sections/CategoriesSection"
+import ReviewsList from "@/components/reviews/ReviewsList"
 
 const Index = () => {
   return (
@@ -13,6 +14,25 @@ const Index = () => {
         <HeroSection />
         <FeaturedProducts />
         <CategoriesSection />
+        
+        {/* Sección de Reseñas de la Tienda */}
+        <section className="py-16 px-4">
+          <div className="container mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold font-orbitron mb-4">
+                ¿Qué dicen nuestros <span className="neon-text">gamers</span>?
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Conoce las experiencias de nuestra comunidad de jugadores
+              </p>
+            </div>
+            
+            <ReviewsList 
+              title="Reseñas de la Tienda"
+              showForm={true}
+            />
+          </div>
+        </section>
       </main>
       <Footer />
       <WhatsAppWidget />

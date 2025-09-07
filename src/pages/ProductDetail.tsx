@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import ReviewsList from "@/components/reviews/ReviewsList"
 import {
   Star,
   ShoppingCart,
@@ -359,6 +360,15 @@ const ProductDetail = () => {
               </CardContent>
             </Card>
           </div>
+        </div>
+
+        {/* Sección de Reseñas */}
+        <div className="mt-12">
+          <ReviewsList 
+            productId={product.id}
+            productTitle={product.title}
+            showForm={true}
+          />
         </div>
       </main>
 

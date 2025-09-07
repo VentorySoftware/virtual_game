@@ -632,7 +632,7 @@ export type Database = {
           id: string
           is_approved: boolean | null
           is_featured: boolean | null
-          product_id: string
+          product_id: string | null
           rating: number
           title: string | null
           updated_at: string
@@ -644,7 +644,7 @@ export type Database = {
           id?: string
           is_approved?: boolean | null
           is_featured?: boolean | null
-          product_id: string
+          product_id?: string | null
           rating: number
           title?: string | null
           updated_at?: string
@@ -656,7 +656,7 @@ export type Database = {
           id?: string
           is_approved?: boolean | null
           is_featured?: boolean | null
-          product_id?: string
+          product_id?: string | null
           rating?: number
           title?: string | null
           updated_at?: string
@@ -978,6 +978,14 @@ export type Database = {
       }
       is_admin: {
         Args: { _user_id: string }
+        Returns: boolean
+      }
+      user_has_purchases: {
+        Args: { user_id_param: string }
+        Returns: boolean
+      }
+      user_purchased_product: {
+        Args: { product_id_param: string; user_id_param: string }
         Returns: boolean
       }
     }

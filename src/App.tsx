@@ -30,6 +30,7 @@ import UsersAdmin from "./pages/admin/Users";
 import SettingsAdmin from "./pages/admin/Settings";
 import BusinessHoursAdmin from "./pages/admin/BusinessHours";
 import AdminMyOrders from "./pages/admin/MyOrders";
+import ReviewsAdmin from "./pages/admin/Reviews";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +63,7 @@ const App = () => (
               <Route path="/admin/users" element={<UsersAdmin />} />
               <Route path="/admin/business-hours" element={<BusinessHoursAdmin />} />
               <Route path="/admin/settings" element={<SettingsAdmin />} />
+              <Route path="/admin/reviews" element={<ReviewsAdmin />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/catalog" element={<Catalog />} />
               <Route path="/product/:slug" element={<ProductDetail />} />

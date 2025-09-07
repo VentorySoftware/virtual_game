@@ -14,7 +14,8 @@ import {
   Gamepad2,
   Home,
   CreditCard,
-  Clock
+  Clock,
+  MessageSquare
 } from "lucide-react"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { useAuth } from "@/contexts/AuthContext"
@@ -39,6 +40,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { name: 'Pedidos', href: '/admin/orders', icon: ShoppingCart },
     { name: 'Mis Pedidos', href: '/admin/my-orders', icon: Package },
     { name: 'Usuarios', href: '/admin/users', icon: Users },
+    { name: 'Reseñas', href: '/admin/reviews', icon: MessageSquare },
     { name: 'Horarios', href: '/admin/business-hours', icon: Clock },
     { name: 'Configuración', href: '/admin/settings', icon: Settings },
   ]
