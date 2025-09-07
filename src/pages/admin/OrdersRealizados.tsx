@@ -550,27 +550,41 @@ const OrdersRealizados = () => {
             </DialogHeader>
 
             {selectedOrder && (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {/* Order Summary */}
                 <Card className="cyber-card">
                   <CardHeader>
-                    <CardTitle>Resumen del Pedido</CardTitle>
+                    <CardTitle className="text-lg font-bold border-b border-primary/30 pb-2 mb-4">
+                      Resumen del Pedido
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <h4 className="font-semibold mb-2">Información del Cliente</h4>
-                        <div className="space-y-1 text-sm">
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <section>
+                        <h4 className="font-semibold text-primary mb-3 flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 14v7m-4-4h8" />
+                          </svg>
+                          Información del Cliente
+                        </h4>
+                        <div className="space-y-2 text-sm text-muted-foreground">
                           <p><strong>Email:</strong> {selectedOrder.profiles?.email || selectedOrder.billing_info?.email || 'N/A'}</p>
                           {selectedOrder.profiles?.first_name && (
                             <p><strong>Nombre:</strong> {selectedOrder.profiles.first_name} {selectedOrder.profiles.last_name}</p>
                           )}
                           <p><strong>Fecha:</strong> {formatDate(selectedOrder.created_at)}</p>
                         </div>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold mb-2">Información del Pedido</h4>
-                        <div className="space-y-1 text-sm">
+                      </section>
+                      <section>
+                        <h4 className="font-semibold text-primary mb-3 flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m-6-8h6" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 20v-8m0 0l-4 4m4-4l4 4" />
+                          </svg>
+                          Información del Pedido
+                        </h4>
+                        <div className="space-y-2 text-sm text-muted-foreground">
                           <p><strong>Número:</strong> #{selectedOrder.order_number}</p>
                           <p><strong>Estado:</strong> {getStatusBadge(selectedOrder.status)}</p>
                           <p><strong>Método de Pago:</strong> {selectedOrder.payment_method || 'N/A'}</p>
@@ -578,7 +592,7 @@ const OrdersRealizados = () => {
                           <p><strong>Saldo:</strong> {selectedOrder.balance !== null ? formatPrice(selectedOrder.balance) : 'N/A'}</p>
                           <p><strong>Productos:</strong> {selectedOrder.order_items.length}</p>
                         </div>
-                      </div>
+                      </section>
                     </div>
                   </CardContent>
                 </Card>
@@ -586,31 +600,35 @@ const OrdersRealizados = () => {
                 {/* Order Items */}
                 <Card className="cyber-card">
                   <CardHeader>
-                    <CardTitle>Productos</CardTitle>
+                    <CardTitle className="text-lg font-bold border-b border-primary/30 pb-2 mb-4">
+                      Productos
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       {selectedOrder.order_items.map((item) => (
-                        <div key={item.id} className="flex flex-col p-4 border border-primary/10 rounded-lg bg-card/30">
-                          <div className="flex justify-between items-center">
-                            <h4 className="font-semibold">{item.product_name}</h4>
-                            <p className="font-bold neon-text">
+                        <div key={item.id} className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border border-primary/20 rounded-lg bg-card/30">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-primary">{item.product_name}</h4>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Cantidad: {item.quantity} × {formatPrice(Number(item.price))}
+                            </p>
+                            {/* Show pack products if this item is a pack */}
+                            {item.product_id && item.product_id.startsWith('pack_') && (
+                              <PackProducts packId={item.product_id} />
+                            )}
+                          </div>
+                          <div className="text-right mt-3 md:mt-0">
+                            <p className="font-bold neon-text text-lg">
                               {formatPrice(Number(item.price) * item.quantity)}
                             </p>
                           </div>
-                          <p className="text-sm text-muted-foreground">
-                            Cantidad: {item.quantity} × {formatPrice(Number(item.price))}
-                          </p>
-                          {/* Show pack products if this item is a pack */}
-                          {item.product_id && item.product_id.startsWith('pack_') && (
-                            <PackProducts packId={item.product_id} />
-                          )}
                         </div>
                       ))}
-                      <div className="border-t border-primary/20 pt-4">
+                      <div className="border-t border-primary/30 pt-4 mt-4">
                         <div className="flex justify-between items-center">
-                          <span className="font-semibold">Total del Pedido:</span>
-                          <span className="text-xl font-bold neon-text">
+                          <span className="font-semibold text-primary text-lg">Total del Pedido:</span>
+                          <span className="text-2xl font-extrabold neon-text">
                             {formatPrice(Number(selectedOrder.total))}
                           </span>
                         </div>
@@ -623,13 +641,15 @@ const OrdersRealizados = () => {
                 {selectedOrder.billing_info && (
                   <Card className="cyber-card">
                     <CardHeader>
-                      <CardTitle>Información de Facturación</CardTitle>
+                      <CardTitle className="text-lg font-bold border-b border-primary/30 pb-2 mb-4">
+                        Información de Facturación
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-muted-foreground">
                         {Object.entries(selectedOrder.billing_info).map(([key, value]) => (
-                          <div key={key}>
-                            <strong className="capitalize">{key.replace(/_/g, ' ')}:</strong> {String(value) || 'N/A'}
+                          <div key={key} className="capitalize">
+                            <strong>{key.replace(/_/g, ' ')}:</strong> {String(value) || 'N/A'}
                           </div>
                         ))}
                       </div>
