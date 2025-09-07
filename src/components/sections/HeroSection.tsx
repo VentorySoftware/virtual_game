@@ -1,9 +1,12 @@
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Badge } from "@/components/ui/badge"
 import { Play, Zap, Star } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 import heroImage from "@/assets/hero-gaming.jpg"
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="relative min-h-[80vh] flex items-center overflow-hidden">
       {/* Background */}
@@ -67,7 +70,7 @@ const HeroSection = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4">
-            <CyberButton variant="cyber" size="xl" className="group">
+            <CyberButton variant="cyber" size="xl" className="group" onClick={() => navigate("/categories")}>
               <Play className="w-5 h-5 mr-2 group-hover:animate-pulse" />
               Explorar Catálogo
             </CyberButton>

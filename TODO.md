@@ -1,11 +1,21 @@
-# TypeScript Errors Fix - jsPDF autoTable
+# TODO - Agregar funcionalidad al botón "Explorar Catálogo"
 
-## Completed Tasks
-- [x] Fixed TypeScript errors in src/pages/MyOrders.tsx
-- [x] Fixed TypeScript errors in src/pages/admin/MyOrders.tsx
-- [x] Used @ts-ignore to suppress TypeScript warnings for jsPDF autotable plugin
+## Tareas Pendientes
+- [x] Editar HeroSection.tsx para agregar navegación al botón "Explorar Catálogo"
+- [x] Importar useNavigate de react-router-dom
+- [x] Agregar onClick handler para redirigir a "/categories"
+- [x] Verificar que la navegación funcione correctamente
 
-## Summary
-The TypeScript errors were caused by the jsPDF autotable plugin not being properly typed. The fix involved using `@ts-ignore` comments to suppress the TypeScript warnings while maintaining the functionality of the PDF receipt generation feature.
+## Información Recopilada
+- Botón localizado en: src/components/sections/HeroSection.tsx
+- Página de destino: src/pages/Categories.tsx (ruta: "/categories")
+- Usa React Router para navegación
+- Componente CyberButton para botones
 
-Both files now compile without errors and the PDF receipt generation should work correctly.
+## Cambios Realizados
+- Agregado import de useNavigate de react-router-dom
+- Agregado hook useNavigate en el componente HeroSection
+- Agregado onClick handler al botón "Explorar Catálogo" que navega a "/categories"
+- Servidor de desarrollo ejecutándose en http://localhost:8084/
+
+## Estado: COMPLETADO
