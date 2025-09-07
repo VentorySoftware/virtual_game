@@ -1,23 +1,32 @@
-# TODO: Fix Pack Price Calculations and Display
+# TODO: Módulo "Pedidos Realizados" en Panel de Administración
 
-## Current Issues
-- When creating new packs, bundle_price is set to 0 instead of calculated value
-- "Precio individual" should be "Precio total" (sum of individual prices)
-- Pack price should be total minus discount percentage
-- "Ahorras" savings display is missing for new packs
+## Información Recopilada
+- El módulo existente en `src/pages/admin/Orders.tsx` maneja todos los pedidos, pero se necesita uno específico para pedidos realizados.
+- Se requiere visualizar estado de ventas, detalles de productos, importes, métodos de pago, saldos y estados de pedidos.
+- Mantener interfaz y diseño actual del sistema.
+- Usar AdminLayout y componentes UI existentes.
 
-## Tasks
-- [x] Modify PackManagement.tsx to calculate total price and discounted price
-- [x] Update savePack function to set bundle_price and original_total correctly
-- [x] Ensure Bundles.tsx displays prices correctly
-- [x] Test the changes with a new pack creation
+## Plan de Implementación
+- [ ] Crear nuevo archivo `src/pages/admin/OrdersRealizados.tsx`
+- [ ] Filtrar pedidos por estados completados ('paid', 'delivered')
+- [ ] Mostrar tabla con: número pedido, fecha, cliente, estado, total, método pago, saldo
+- [ ] Implementar modal de detalles con productos, importes, método pago, saldos, estados
+- [ ] Añadir filtros por estado, rango fechas, cliente
+- [ ] Funcionalidad de exportación a CSV/Excel
+- [ ] Integrar con AdminLayout y componentes UI
+- [ ] Verificar y extender consulta para obtener método pago y saldos si faltan
+- [ ] Probar filtros, ordenamiento, paginación y modal
+- [ ] Actualizar rutas si es necesario para acceder al nuevo módulo
 
-## Files to Edit
-- src/pages/admin/PackManagement.tsx
-- Possibly src/pages/Bundles.tsx (if needed for display adjustments)
+## Archivos Dependientes
+- `src/pages/admin/OrdersRealizados.tsx` (nuevo)
+- Posiblemente actualizar rutas en `src/App.tsx` o similar
+- Usar hooks existentes: useAuth, useNotifications, etc.
 
-## Changes Made
-- Updated PackManagement.tsx savePack function to calculate total price from selected products and apply discount
-- Changed "Precio individual" to "Precio total" in Bundles.tsx
-- Added validation to ensure at least one product is selected
-- Prices are now correctly calculated and saved to database
+## Pasos de Seguimiento
+- [ ] Implementar componente base
+- [ ] Añadir funcionalidad de filtros y búsqueda
+- [ ] Implementar modal de detalles
+- [ ] Añadir exportación
+- [ ] Probar y ajustar diseño
+- [ ] Verificar integración con panel admin

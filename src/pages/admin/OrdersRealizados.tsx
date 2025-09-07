@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react"
 import { Navigate } from "react-router-dom"
-import { Search, Eye, Package, Calendar, Filter, Download, ArrowUpDown, ArrowUp, ArrowDown, FileText, FileSpreadsheet } from "lucide-react"
+import { Search, Eye, Package, Filter, FileText, FileSpreadsheet, ArrowUp, ArrowDown } from "lucide-react"
 import AdminLayout from "@/components/admin/AdminLayout"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Input } from "@/components/ui/input"
@@ -15,17 +15,16 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { useNotifications } from "@/hooks/useNotifications"
-import { useCategories } from "@/hooks/useCategories"
-import { usePlatforms } from "@/hooks/usePlatforms"
-import { useProducts } from "@/hooks/useProducts"
 import { useToast } from "@/hooks/use-toast"
 
 interface OrderWithRelations {
   id: string
   order_number: string
   total: number
-  status: 'draft' | 'paid' | 'verifying' | 'delivered' | 'cancelled' | 'pending'
+  status: 'paid' | 'delivered' | 'cancelled' | 'pending' | 'verifying' | 'draft'
   payment_status: string
+  payment_method: string | null
+  balance: number | null
   created_at: string
   billing_info: any
   user_id: string
@@ -40,39 +39,19 @@ interface OrderWithRelations {
     quantity: number
     price: number
     product_id: string | null
-    product?: {
-      category_id: string | null
-      platform_id: string | null
-    } | null
-  }>
-  categories: Array<{
-    id: string
-    name: string
-  }>
-  platforms: Array<{
-    id: string
-    name: string
   }>
 }
 
-const OrdersAdmin = () => {
+const OrdersRealizados = () => {
   const { user } = useAuth()
   const notifications = useNotifications()
-  const { categories } = useCategories()
-  const { platforms } = usePlatforms()
-  const { products } = useProducts()
   const { toast } = useToast()
 
-  const [users, setUsers] = useState([])
   const [orders, setOrders] = useState<OrderWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [productFilter, setProductFilter] = useState("all")
-  const [categoryFilter, setCategoryFilter] = useState("all")
-  const [platformFilter, setPlatformFilter] = useState("all")
-  const [userFilter, setUserFilter] = useState("all")
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
@@ -95,24 +74,13 @@ const OrdersAdmin = () => {
     }
   }, [user])
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      const { data } = await supabase.from('profiles').select('id, email, first_name, last_name')
-      setUsers(data || [])
-    }
-    fetchUsers()
-  }, [])
-
   const checkAdminStatus = async () => {
     if (!user) return
 
     try {
       const { data, error } = await supabase.rpc('is_admin', { _user_id: user.id })
-      
       if (error) throw error
-      
       setIsAdmin(data)
-      
       if (data) {
         await fetchOrders()
       }
@@ -131,33 +99,17 @@ const OrdersAdmin = () => {
         .select(`
           *,
           profiles(email, first_name, last_name),
-          order_items(id, product_name, quantity, price, product_id, product:products(category_id, platform_id)),
-          categories: order_items!inner.product!inner.categories (id, name),
-          platforms: order_items!inner.product!inner.platforms (id, name)
+          order_items(id, product_name, quantity, price, product_id),
+          billing_info
         `)
+        .in('status', ['paid', 'delivered'])
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setOrders((data || []) as unknown as OrderWithRelations[])
+      setOrders(data || [])
     } catch (error) {
       console.error('Error fetching orders:', error)
       notifications.error('Error al cargar los pedidos: ' + error.message)
-    }
-  }
-
-  const updateOrderStatus = async (orderId: string, newStatus: 'draft' | 'paid' | 'verifying' | 'delivered' | 'cancelled' | 'pending') => {
-    try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ status: newStatus })
-        .eq('id', orderId)
-
-      if (error) throw error
-
-      await fetchOrders()
-    } catch (error) {
-      console.error('Error updating order status:', error)
-      notifications.error('Error al actualizar el estado del pedido')
     }
   }
 
@@ -178,28 +130,15 @@ const OrdersAdmin = () => {
     })
   }
 
-  const getStatusLabel = (status: string) => {
-    const statusMap = {
-      draft: 'Pendiente',
-      paid: 'Pagado',
-      verifying: 'Verificando',
-      delivered: 'Entregado',
-      cancelled: 'Cancelado',
-      pending: 'Pendiente de Pago',
-    }
-    return statusMap[status as keyof typeof statusMap] || 'Pendiente'
-  }
-
   const getStatusBadge = (status: string) => {
     const statusMap = {
-      draft: { label: 'Pendiente', class: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
       paid: { label: 'Pagado', class: 'bg-green-500/20 text-green-400 border-green-500/30' },
-      verifying: { label: 'Verificando', class: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
       delivered: { label: 'Entregado', class: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' },
       cancelled: { label: 'Cancelado', class: 'bg-red-500/20 text-red-400 border-red-500/30' },
       pending: { label: 'Pendiente de Pago', class: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+      verifying: { label: 'Verificando', class: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+      draft: { label: 'Pendiente', class: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
     }
-
     const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap.draft
     return (
       <Badge className={statusInfo.class}>
@@ -215,15 +154,7 @@ const OrdersAdmin = () => {
 
     const matchesStatus = statusFilter === "all" || order.status === statusFilter
 
-    const matchesProduct = productFilter === "all" || order.order_items.some(item => item.product_id === productFilter)
-
-    const matchesCategory = categoryFilter === "all" || order.order_items.some(item => item.product?.category_id === categoryFilter)
-
-    const matchesPlatform = platformFilter === "all" || order.order_items.some(item => item.product?.platform_id === platformFilter)
-
-    const matchesUser = userFilter === "all" || order.user_id === userFilter
-
-    return matchesSearch && matchesStatus && matchesProduct && matchesCategory && matchesPlatform && matchesUser
+    return matchesSearch && matchesStatus
   })
 
   // Sorting function
@@ -241,14 +172,15 @@ const OrdersAdmin = () => {
   const exportToCSV = () => {
     setIsExporting(true)
     try {
-      const headers = ['Número de Pedido', 'Fecha', 'Cliente', 'Estado', 'Total', 'Productos']
+      const headers = ['Número de Pedido', 'Fecha', 'Cliente', 'Estado', 'Total', 'Método de Pago', 'Saldo']
       const csvData = filteredOrders.map(order => [
         order.order_number,
         formatDate(order.created_at),
         order.profiles?.email || order.billing_info?.email || 'N/A',
-        getStatusLabel(order.status),
+        order.status,
         formatPrice(Number(order.total)),
-        order.order_items.map(item => `${item.product_name} (x${item.quantity})`).join('; ')
+        order.payment_method || 'N/A',
+        order.balance !== null ? formatPrice(order.balance) : 'N/A'
       ])
 
       const csvContent = [headers, ...csvData]
@@ -258,30 +190,13 @@ const OrdersAdmin = () => {
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
       const link = document.createElement('a')
       link.href = URL.createObjectURL(blob)
-      link.download = `pedidos_${new Date().toISOString().split('T')[0]}.csv`
+      link.download = `pedidos_realizados_${new Date().toISOString().split('T')[0]}.csv`
       link.click()
 
       toast({
         title: "Exportación exitosa",
         description: "Los datos se han exportado a CSV correctamente.",
       })
-    } catch (error) {
-      toast({
-        title: "Error en exportación",
-        description: "Hubo un error al exportar los datos.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsExporting(false)
-    }
-  }
-
-  const exportToExcel = () => {
-    setIsExporting(true)
-    try {
-      // For Excel export, we'll use CSV format as well since it's simpler
-      // In a real application, you might want to use a library like xlsx
-      exportToCSV()
     } catch (error) {
       toast({
         title: "Error en exportación",
@@ -346,12 +261,12 @@ const OrdersAdmin = () => {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, statusFilter, productFilter, categoryFilter, platformFilter, userFilter])
+  }, [searchTerm, statusFilter])
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-dark flex items-center justify-center">
-        <div className="animate-cyber-pulse text-primary">Cargando pedidos...</div>
+        <div className="animate-cyber-pulse text-primary">Cargando pedidos realizados...</div>
       </div>
     )
   }
@@ -366,10 +281,10 @@ const OrdersAdmin = () => {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold font-orbitron neon-text">
-            Gestión de Pedidos
+            Pedidos Realizados
           </h1>
           <p className="text-muted-foreground">
-            Administra y rastrea todos los pedidos
+            Visualiza y consulta el estado de las ventas realizadas
           </p>
         </div>
 
@@ -395,16 +310,16 @@ const OrdersAdmin = () => {
                     className="cyber-border"
                   >
                     <FileText className="h-4 w-4 mr-2" />
-                    {isExporting ? 'Exportando...' : 'CSV'}
+                    {isExporting ? 'Exportando...' : 'Exportar CSV'}
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={exportToExcel}
+                    onClick={exportToCSV}
                     disabled={isExporting}
                     className="cyber-border"
                   >
                     <FileSpreadsheet className="h-4 w-4 mr-2" />
-                    {isExporting ? 'Exportando...' : 'Excel'}
+                    {isExporting ? 'Exportando...' : 'Exportar Excel'}
                   </Button>
                 </div>
               </div>
@@ -416,75 +331,12 @@ const OrdersAdmin = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos los estados</SelectItem>
-                    <SelectItem value="draft">Pendiente</SelectItem>
-                    <SelectItem value="pending">Pendiente de Pago</SelectItem>
                     <SelectItem value="paid">Pagado</SelectItem>
-                    <SelectItem value="verifying">Verificando</SelectItem>
                     <SelectItem value="delivered">Entregado</SelectItem>
                     <SelectItem value="cancelled">Cancelado</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={productFilter} onValueChange={setProductFilter}>
-                  <SelectTrigger className="w-full cyber-border">
-                    <SelectValue placeholder="Producto" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los productos</SelectItem>
-                    {products.map((product) => (
-                      <SelectItem key={product.id} value={product.id}>
-                        {product.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-full cyber-border">
-                    <SelectValue placeholder="Categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas las categorías</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={platformFilter} onValueChange={setPlatformFilter}>
-                  <SelectTrigger className="w-full cyber-border">
-                    <SelectValue placeholder="Plataforma" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas las plataformas</SelectItem>
-                    {platforms.map((platform) => (
-                      <SelectItem key={platform.id} value={platform.name}>
-                        {platform.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={userFilter} onValueChange={setUserFilter}>
-                  <SelectTrigger className="w-full cyber-border">
-                    <SelectValue placeholder="Usuario" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los usuarios</SelectItem>
-                    {users.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number(value))}>
-                  <SelectTrigger className="w-full cyber-border">
-                    <SelectValue placeholder="Por página" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5 por página</SelectItem>
-                    <SelectItem value="10">10 por página</SelectItem>
-                    <SelectItem value="20">20 por página</SelectItem>
-                    <SelectItem value="50">50 por página</SelectItem>
+                    <SelectItem value="pending">Pendiente de Pago</SelectItem>
+                    <SelectItem value="verifying">Verificando</SelectItem>
+                    <SelectItem value="draft">Pendiente</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -497,7 +349,7 @@ const OrdersAdmin = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Package className="h-5 w-5" />
-              Lista de Pedidos
+              Lista de Pedidos Realizados
             </CardTitle>
             <div className="text-sm text-muted-foreground">
               {filteredOrders.length === 0
@@ -553,17 +405,10 @@ const OrdersAdmin = () => {
                           Cliente
                         </TableHead>
                         <TableHead className="w-[120px] min-w-[120px]">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleSort('status')}
-                            className="h-auto p-0 font-medium hover:bg-transparent text-left"
-                          >
-                            Estado
-                            {sortBy === 'status' && (
-                              sortOrder === 'asc' ? <ArrowUp className="h-4 w-4 ml-1 inline" /> : <ArrowDown className="h-4 w-4 ml-1 inline" />
-                            )}
-                          </Button>
+                          Estado
+                        </TableHead>
+                        <TableHead className="w-[140px] min-w-[140px]">
+                          Método de Pago
                         </TableHead>
                         <TableHead className="w-[120px] min-w-[120px] text-right">
                           <Button
@@ -577,6 +422,9 @@ const OrdersAdmin = () => {
                               sortOrder === 'asc' ? <ArrowUp className="h-4 w-4 ml-1 inline" /> : <ArrowDown className="h-4 w-4 ml-1 inline" />
                             )}
                           </Button>
+                        </TableHead>
+                        <TableHead className="w-[120px] min-w-[120px]">
+                          Saldo
                         </TableHead>
                         <TableHead className="w-[200px] min-w-[200px]">
                           Acciones
@@ -611,27 +459,17 @@ const OrdersAdmin = () => {
                           <TableCell>
                             {getStatusBadge(order.status)}
                           </TableCell>
+                          <TableCell>
+                            {order.payment_method || 'N/A'}
+                          </TableCell>
                           <TableCell className="text-right font-medium font-mono">
                             {formatPrice(Number(order.total))}
                           </TableCell>
                           <TableCell>
+                            {order.balance !== null ? formatPrice(order.balance) : 'N/A'}
+                          </TableCell>
+                          <TableCell>
                             <div className="flex flex-col sm:flex-row gap-2">
-                              <Select
-                                value={order.status}
-                                onValueChange={(value) => updateOrderStatus(order.id, value as any)}
-                              >
-                                <SelectTrigger className="w-full sm:w-32 h-8 text-xs cyber-border">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="draft">Pendiente</SelectItem>
-                                  <SelectItem value="pending">Pendiente de Pago</SelectItem>
-                                  <SelectItem value="paid">Pagado</SelectItem>
-                                  <SelectItem value="verifying">Verificando</SelectItem>
-                                  <SelectItem value="delivered">Entregado</SelectItem>
-                                  <SelectItem value="cancelled">Cancelado</SelectItem>
-                                </SelectContent>
-                              </Select>
                               <CyberButton
                                 variant="outline"
                                 size="sm"
@@ -731,7 +569,9 @@ const OrdersAdmin = () => {
                         <div className="space-y-1 text-sm">
                           <p><strong>Número:</strong> #{selectedOrder.order_number}</p>
                           <p><strong>Estado:</strong> {getStatusBadge(selectedOrder.status)}</p>
+                          <p><strong>Método de Pago:</strong> {selectedOrder.payment_method || 'N/A'}</p>
                           <p><strong>Total:</strong> {formatPrice(Number(selectedOrder.total))}</p>
+                          <p><strong>Saldo:</strong> {selectedOrder.balance !== null ? formatPrice(selectedOrder.balance) : 'N/A'}</p>
                           <p><strong>Productos:</strong> {selectedOrder.order_items.length}</p>
                         </div>
                       </div>
@@ -799,4 +639,4 @@ const OrdersAdmin = () => {
   )
 }
 
-export default OrdersAdmin
+export default OrdersRealizados

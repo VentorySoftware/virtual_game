@@ -26,6 +26,7 @@ import PlatformsAdmin from "./pages/admin/Platforms";
 import PromotionsAdmin from "./pages/admin/Promotions";
 import PaymentMethodsAdmin from "./pages/admin/PaymentMethods";
 import OrdersAdmin from "./pages/admin/Orders";
+import OrdersRealizados from "./pages/admin/OrdersRealizados";
 import UsersAdmin from "./pages/admin/Users";
 import SettingsAdmin from "./pages/admin/Settings";
 import BusinessHoursAdmin from "./pages/admin/BusinessHours";
@@ -60,6 +61,7 @@ const App = () => (
               <Route path="/admin/promotions" element={<PromotionsAdmin />} />
               <Route path="/admin/payment-methods" element={<PaymentMethodsAdmin />} />
               <Route path="/admin/orders" element={<OrdersAdmin />} />
+              <Route path="/admin/orders-realizados" element={<OrdersRealizados />} />
               {/* Removed route for admin "Mis Pedidos" */}
               <Route path="/admin/users" element={<UsersAdmin />} />
               <Route path="/admin/business-hours" element={<BusinessHoursAdmin />} />
