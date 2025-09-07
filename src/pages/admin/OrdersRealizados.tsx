@@ -80,9 +80,13 @@ const OrdersRealizados = () => {
     try {
       const { data, error } = await supabase.rpc('is_admin', { _user_id: user.id })
       if (error) throw error
+      console.log('User is admin:', data)
       setIsAdmin(data)
       if (data) {
+        console.log('Calling fetchOrders...')
         await fetchOrders()
+      } else {
+        console.log('User is not admin, skipping fetchOrders')
       }
     } catch (error) {
       console.error('Error checking admin status:', error)
@@ -98,14 +102,13 @@ const OrdersRealizados = () => {
         .from('orders')
         .select(`
           *,
-          profiles(email, first_name, last_name),
-          order_items(id, product_name, quantity, price, product_id),
+          order_items!order_id(id, product_name, quantity, price, product_id),
           billing_info
         `)
-        .in('status', ['paid', 'delivered'])
         .order('created_at', { ascending: false })
 
       if (error) throw error
+      console.log('Fetched all orders:', data)
       setOrders(data || [])
     } catch (error) {
       console.error('Error fetching orders:', error)
