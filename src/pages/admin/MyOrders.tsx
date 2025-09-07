@@ -177,6 +177,7 @@ const AdminMyOrders = () => {
     doc.text(`Fecha: ${formatDate(order.created_at)}`, 20, yPos + 32)
     doc.text(`Estado: ${getStatusBadge(order.status).props.children[1]}`, 20, yPos + 39)
     doc.text(`Método de Pago: ${getPaymentMethodLabel(order.payment_method)}`, 20, yPos + 46)
+    doc.text(`Estado de Pago: ${order.payment_status === 'paid' ? 'Pagado' : order.payment_status === 'pending' ? 'Pendiente' : order.payment_status}`, 20, yPos + 53)
 
     // Customer information
     doc.setFontSize(12)
@@ -449,7 +450,7 @@ const AdminMyOrders = () => {
                               size="sm"
                               onClick={() => printReceipt(selectedOrder)}
                             >
-                              Imprimir Recibo
+                              Descargar Recibo
                             </CyberButton>
                           </div>
                         </div>
