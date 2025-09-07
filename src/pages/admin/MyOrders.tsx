@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
+import { useSiteSettings } from "@/hooks/useSiteSettings"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 
@@ -39,6 +40,7 @@ const AdminMyOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const { user } = useAuth()
   const { toast } = useToast()
+  const { settings } = useSiteSettings()
 
   useEffect(() => {
     if (user) {
@@ -126,29 +128,81 @@ const AdminMyOrders = () => {
   const printReceipt = (order: Order) => {
     const doc = new jsPDF()
 
-    // Store name at the top
-    doc.setFontSize(18)
-    doc.text("Virtual Game", 105, 15, { align: "center" })
+    // Header with store information
+    doc.setFontSize(20)
+    doc.setFont("helvetica", "bold")
+    const storeName = settings.site_name || "Virtual Game"
+    doc.text(storeName, 105, 20, { align: "center" })
 
-    // Order header
-    doc.setFontSize(12)
-    doc.text(`Recibo de Pedido #${order.order_number}`, 105, 30, { align: "center" })
-    doc.text(`Fecha: ${formatDate(order.created_at)}`, 105, 37, { align: "center" })
+    // Store description
+    if (settings.site_description) {
+      doc.setFontSize(10)
+      doc.setFont("helvetica", "normal")
+      const descriptionLines = doc.splitTextToSize(settings.site_description, 180)
+      doc.text(descriptionLines, 105, 30, { align: "center" })
+    }
 
-    // Billing info
+    // Store contact information
+    doc.setFontSize(9)
+    doc.setFont("helvetica", "normal")
+    let yPos = settings.site_description ? 45 : 35
+
+    if (settings.contact_email) {
+      doc.text(`Email: ${settings.contact_email}`, 105, yPos, { align: "center" })
+      yPos += 5
+    }
+
+    if (settings.whatsapp_number) {
+      doc.text(`WhatsApp: ${settings.whatsapp_number}`, 105, yPos, { align: "center" })
+      yPos += 5
+    }
+
+    if (settings.contact_address) {
+      doc.text(`Dirección: ${settings.contact_address}`, 105, yPos, { align: "center" })
+      yPos += 5
+    }
+
+    // Separator line
+    doc.setLineWidth(0.5)
+    doc.line(20, yPos + 5, 190, yPos + 5)
+
+    // Order information
+    doc.setFontSize(14)
+    doc.setFont("helvetica", "bold")
+    doc.text("RECIBO DE COMPRA", 105, yPos + 15, { align: "center" })
+
     doc.setFontSize(10)
-    doc.text("Información de Facturación:", 14, 50)
-    doc.text(`${order.billing_info.firstName} ${order.billing_info.lastName}`, 14, 57)
-    doc.text(`${order.billing_info.email}`, 14, 64)
+    doc.setFont("helvetica", "normal")
+    doc.text(`Número de Pedido: ${order.order_number}`, 20, yPos + 25)
+    doc.text(`Fecha: ${formatDate(order.created_at)}`, 20, yPos + 32)
+    doc.text(`Estado: ${getStatusBadge(order.status).props.children[1]}`, 20, yPos + 39)
+    doc.text(`Método de Pago: ${getPaymentMethodLabel(order.payment_method)}`, 20, yPos + 46)
+
+    // Customer information
+    doc.setFontSize(12)
+    doc.setFont("helvetica", "bold")
+    doc.text("Información del Cliente:", 20, yPos + 60)
+
+    doc.setFontSize(10)
+    doc.setFont("helvetica", "normal")
+    doc.text(`Nombre: ${order.billing_info.firstName} ${order.billing_info.lastName}`, 20, yPos + 67)
+    doc.text(`Email: ${order.billing_info.email}`, 20, yPos + 74)
+
     if (order.billing_info.phone) {
-      doc.text(`${order.billing_info.phone}`, 14, 71)
-    }
-    if (order.billing_info.address) {
-      doc.text(`${order.billing_info.address}, ${order.billing_info.city} ${order.billing_info.postalCode}`, 14, 78)
+      doc.text(`Teléfono: ${order.billing_info.phone}`, 20, yPos + 81)
     }
 
-    // Table of products
-    const columns = ["Producto", "Cantidad", "Precio Unitario", "Total"]
+    if (order.billing_info.address) {
+      doc.text(`Dirección: ${order.billing_info.address}`, 20, yPos + 88)
+      if (order.billing_info.city && order.billing_info.postalCode) {
+        doc.text(`${order.billing_info.city} ${order.billing_info.postalCode}`, 20, yPos + 95)
+      }
+    }
+
+    // Products table
+    const tableStartY = order.billing_info.address ? yPos + 105 : yPos + 90
+
+    const columns = ["Producto", "Cantidad", "Precio Unit.", "Total"]
     const rows = order.order_items.map(item => [
       item.product_name,
       item.quantity.toString(),
@@ -157,25 +211,40 @@ const AdminMyOrders = () => {
     ])
 
     autoTable(doc, {
-      startY: 85,
+      startY: tableStartY,
       head: [columns],
       body: rows,
       theme: "grid",
-      headStyles: { fillColor: [22, 160, 133] },
-      styles: { fontSize: 9 }
+      headStyles: {
+        fillColor: [41, 128, 185],
+        textColor: 255,
+        fontStyle: "bold"
+      },
+      styles: {
+        fontSize: 9,
+        cellPadding: 3
+      },
+      columnStyles: {
+        0: { cellWidth: 80 },
+        1: { cellWidth: 25, halign: 'center' },
+        2: { cellWidth: 35, halign: 'right' },
+        3: { cellWidth: 35, halign: 'right' }
+      }
     })
 
     // Total
-    const finalY = (doc as any).lastAutoTable.finalY || 100
+    const finalY = (doc as any).lastAutoTable.finalY || tableStartY + 50
     doc.setFontSize(12)
-    doc.text(`Total: ${formatPrice(order.total)}`, 14, finalY + 10)
+    doc.setFont("helvetica", "bold")
+    doc.text(`TOTAL: ${formatPrice(order.total)}`, 170, finalY + 10, { align: "right" })
 
     // Footer
     doc.setFontSize(8)
-    doc.text("NO VALIDO COMO FACTURA", 105, 280, { align: "center" })
+    doc.setFont("helvetica", "normal")
+    doc.text("Este documento no tiene validez fiscal", 105, 280, { align: "center" })
     doc.text("Sistema desarrollado por NUVEM Software", 105, 286, { align: "center" })
 
-    doc.save(`Recibo_Pedido_${order.order_number}.pdf`)
+    doc.save(`Recibo_${storeName}_${order.order_number}.pdf`)
   }
 
   if (!user) {
