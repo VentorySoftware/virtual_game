@@ -1,33 +1,48 @@
-import { useBundles } from "@/hooks/useBundles"
+import { useBundles, SortOption } from "@/hooks/useBundles"
+import { usePlatforms } from "@/hooks/usePlatforms"
 import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
 import { Badge } from "@/components/ui/badge"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Package, Star, ShoppingCart, ArrowRight, Gift } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Package, Star, ShoppingCart, ArrowRight, Gift, Search, Filter } from "lucide-react"
 import { useSiteSettings } from "@/hooks/useSiteSettings"
 import { useLocation } from "react-router-dom"
-import { useMemo } from "react"
+import { useMemo, useState, useEffect } from "react"
 
 const Bundles = () => {
-  const { bundles, loading } = useBundles()
+  const { platforms } = usePlatforms()
   const { settings } = useSiteSettings()
   const location = useLocation()
 
-  // Extract platform filter from query params
-  const searchParams = new URLSearchParams(location.search)
-  const platformFilter = searchParams.get("platform")
+  // State for filters
+  const [platformFilter, setPlatformFilter] = useState<string>("all")
+  const [searchText, setSearchText] = useState<string>("")
+  const [sortOption, setSortOption] = useState<SortOption>("recent")
 
-  // Filter bundles by platform if filter is present
-  const filteredBundles = useMemo(() => {
-    if (!platformFilter) return bundles
+  // Extract platform filter from query params on mount
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search)
+    const platform = searchParams.get("platform")
+    if (platform) {
+      setPlatformFilter(platform)
+    }
+  }, [location.search])
 
-    return bundles.filter(bundle => 
-      bundle.bundle_items?.some(item => 
-        item.product?.platform?.slug === platformFilter
-      )
-    )
-  }, [bundles, platformFilter])
+  // Clear all filters
+  const clearFilters = () => {
+    setPlatformFilter("all")
+    setSearchText("")
+    setSortOption("recent")
+  }
+
+  // Check if any filters are active
+  const hasActiveFilters = platformFilter !== "all" || searchText.trim() !== "" || sortOption !== "recent"
+
+  // Get bundles with filters
+  const { bundles, loading } = useBundles(undefined, platformFilter, searchText, sortOption)
 
   if (loading) {
     return (
@@ -106,6 +121,60 @@ const Bundles = () => {
           </Card>
         </section>
 
+        {/* Filters and Search */}
+        <section className="space-y-4">
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="flex flex-col md:flex-row gap-4 items-center flex-1">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Buscar packs..."
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <div className="flex gap-2 items-center">
+                <Filter className="w-4 h-4 text-muted-foreground" />
+                <Select value={platformFilter || undefined} onValueChange={setPlatformFilter}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Todas las plataformas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las plataformas</SelectItem>
+                    {platforms.map((platform) => (
+                      <SelectItem key={platform.id} value={platform.slug}>
+                        {platform.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Ordenar por" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="recent">Más recientes</SelectItem>
+                    <SelectItem value="oldest">Más antiguos</SelectItem>
+                    <SelectItem value="price_asc">Precio: Menor a Mayor</SelectItem>
+                    <SelectItem value="price_desc">Precio: Mayor a Menor</SelectItem>
+                  </SelectContent>
+                </Select>
+                {hasActiveFilters && (
+                  <CyberButton
+                    variant="outline"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="ml-2"
+                  >
+                    Limpiar filtros
+                  </CyberButton>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Bundles Grid */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
@@ -113,13 +182,13 @@ const Bundles = () => {
               Packs <span className="text-secondary">Disponibles</span>
             </h2>
             <Badge variant="outline" className="border-secondary text-secondary">
-              {filteredBundles.length} packs activos
+              {bundles.length} packs activos
             </Badge>
           </div>
 
-          {filteredBundles.length > 0 ? (
+          {bundles.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {filteredBundles.map((bundle) => {
+              {bundles.map((bundle) => {
                 const savings = bundle.original_total && bundle.bundle_price 
                   ? bundle.original_total - bundle.bundle_price 
                   : 0
