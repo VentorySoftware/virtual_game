@@ -20,10 +20,10 @@ const Index = () => {
           <div className="container mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold font-orbitron mb-4">
-                ¿Qué dicen nuestros <span className="neon-text">gamers</span>?
+                💬 Lo que opinan los demás jugadores 🕹️
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Conoce las experiencias de nuestra comunidad de jugadores
+                Historias reales de gamers que confiaron en nosotros
               </p>
             </div>
             
