@@ -3,17 +3,25 @@ import { CyberButton } from "@/components/ui/cyber-button"
 import ProductCard from "@/components/products/ProductCard"
 import { ArrowRight, Flame, Clock, Package } from "lucide-react"
 import { useFeaturedProducts, usePreorderProducts } from "@/hooks/useProducts"
+import { usePlatforms } from "@/hooks/usePlatforms"
+import { useNavigate } from "react-router-dom"
 
 const FeaturedProducts = () => {
   const { products: featuredProducts, loading: featuredLoading } = useFeaturedProducts()
   const { products: preOrderProducts, loading: preOrderLoading } = usePreorderProducts()
+  const { platforms, loading: platformsLoading } = usePlatforms()
+  const navigate = useNavigate()
 
-  if (featuredLoading || preOrderLoading) {
+  if (featuredLoading || preOrderLoading || platformsLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     )
+  }
+
+  const handlePlatformClick = (platformSlug: string) => {
+    navigate(`/packs?platform=${platformSlug}`)
   }
 
   return (
@@ -110,25 +118,18 @@ const FeaturedProducts = () => {
               </p>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <CyberButton 
-                variant="outline" 
-                className="bg-white/10 border-white/30 text-white hover:bg-white hover:text-black"
-              >
-                Ver Packs PS5
-              </CyberButton>
-              <CyberButton 
-                variant="outline"
-                className="bg-white/10 border-white/30 text-white hover:bg-white hover:text-black"
-              >
-                Ver Packs Xbox
-              </CyberButton>
-              <CyberButton 
-                variant="outline"
-                className="bg-white/10 border-white/30 text-white hover:bg-white hover:text-black"
-              >
-                Ver Packs PC
-              </CyberButton>
+            <div className="flex flex-col sm:flex-col gap-4 justify-center max-w-full overflow-hidden">
+              {platforms.map((platform) => (
+                <CyberButton 
+                  key={platform.id}
+                  variant="outline"
+                  className="bg-white/10 border-white/30 text-white hover:bg-white hover:text-black whitespace-nowrap max-w-full overflow-hidden text-ellipsis"
+                  onClick={() => handlePlatformClick(platform.slug)}
+                  style={{minWidth: '100%'}}
+                >
+                  Ver Packs {platform.name}
+                </CyberButton>
+              ))}
             </div>
           </div>
         </div>

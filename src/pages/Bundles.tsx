@@ -6,10 +6,28 @@ import { CyberButton } from "@/components/ui/cyber-button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Package, Star, ShoppingCart, ArrowRight, Gift } from "lucide-react"
 import { useSiteSettings } from "@/hooks/useSiteSettings"
+import { useLocation } from "react-router-dom"
+import { useMemo } from "react"
 
 const Bundles = () => {
   const { bundles, loading } = useBundles()
   const { settings } = useSiteSettings()
+  const location = useLocation()
+
+  // Extract platform filter from query params
+  const searchParams = new URLSearchParams(location.search)
+  const platformFilter = searchParams.get("platform")
+
+  // Filter bundles by platform if filter is present
+  const filteredBundles = useMemo(() => {
+    if (!platformFilter) return bundles
+
+    return bundles.filter(bundle => 
+      bundle.bundle_items?.some(item => 
+        item.product?.platform?.slug === platformFilter
+      )
+    )
+  }, [bundles, platformFilter])
 
   if (loading) {
     return (
@@ -95,13 +113,13 @@ const Bundles = () => {
               Packs <span className="text-secondary">Disponibles</span>
             </h2>
             <Badge variant="outline" className="border-secondary text-secondary">
-              {bundles.length} packs activos
+              {filteredBundles.length} packs activos
             </Badge>
           </div>
 
-          {bundles.length > 0 ? (
+          {filteredBundles.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {bundles.map((bundle) => {
+              {filteredBundles.map((bundle) => {
                 const savings = bundle.original_total && bundle.bundle_price 
                   ? bundle.original_total - bundle.bundle_price 
                   : 0
