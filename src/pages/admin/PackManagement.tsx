@@ -161,7 +161,10 @@ const PackManagement = () => {
           })
           .eq("id", packId)
 
-        if (error) throw error
+        if (error) {
+          console.error("Error updating pack:", error)
+          throw error
+        }
 
         // Update bundle items: delete old and insert new
         await supabase.from("bundle_items").delete().eq("bundle_id", packId)
@@ -174,26 +177,38 @@ const PackManagement = () => {
 
         if (newItems.length > 0) {
           const { error: insertError } = await supabase.from("bundle_items").insert(newItems)
-          if (insertError) throw insertError
+          if (insertError) {
+            console.error("Error inserting bundle items:", insertError)
+            throw insertError
+          }
         }
       } else {
         // Insert new pack
+        const packData = {
+          name,
+          description,
+          is_active: isActive,
+          valid_until: validUntil || null,
+          platform_id: platformId,
+          discount_percentage: discountPercentage,
+          bundle_price: 0, // Added default value to satisfy NOT NULL constraint
+        }
+
+        console.log("Inserting pack with data:", packData)
+
         const { data, error } = await supabase
           .from("product_bundles")
-          .insert([{
-            name,
-            description,
-            is_active: isActive,
-            valid_until: validUntil || null,
-            platform_id: platformId,
-            discount_percentage: discountPercentage,
-          }])
+          .insert([packData])
           .select()
           .single()
 
-        if (error) throw error
+        if (error) {
+          console.error("Error inserting pack:", error)
+          throw error
+        }
 
         packId = data.id
+        console.log("Pack created with ID:", packId)
 
         const newItems = Array.from(selectedProductIds).map(product_id => ({
           bundle_id: packId,
@@ -202,8 +217,12 @@ const PackManagement = () => {
         }))
 
         if (newItems.length > 0) {
+          console.log("Inserting bundle items:", newItems)
           const { error: insertError } = await supabase.from("bundle_items").insert(newItems)
-          if (insertError) throw insertError
+          if (insertError) {
+            console.error("Error inserting bundle items:", insertError)
+            throw insertError
+          }
         }
       }
 
@@ -211,9 +230,9 @@ const PackManagement = () => {
       setIsDialogOpen(false)
       setSelectedPack(null)
       fetchPacks()
-    } catch (error) {
-      notifications.error("Error al guardar el pack")
-      console.error(error)
+    } catch (error: any) {
+      console.error("Full error details:", error)
+      notifications.error(`Error al guardar el pack: ${error.message || 'Error desconocido'}`)
     }
   }
 
@@ -289,54 +308,55 @@ const PackManagement = () => {
             </DialogHeader>
 
             <form onSubmit={e => { e.preventDefault(); savePack(); }}>
-              <div className="space-y-4">
+              <div className="space-y-4 p-6 bg-background border border-border rounded-lg shadow-lg">
                 <input
                   placeholder="Nombre del pack"
                   value={name}
                   onChange={e => setName(e.target.value)}
                   required
-                  className="cyber-input w-full"
+                  className="w-full px-4 py-2 border border-border rounded-md bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <input
                   placeholder="Descripción del pack"
                   value={description}
                   onChange={e => setDescription(e.target.value)}
-                  className="cyber-input w-full"
+                  className="w-full px-4 py-2 border border-border rounded-md bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
-                <div className="flex items-center space-x-4">
-                  <label className="flex items-center space-x-2">
+                <div className="flex items-center space-x-6">
+                  <label className="flex items-center space-x-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={isActive}
                       onChange={e => setIsActive(e.target.checked)}
+                      className="form-checkbox h-5 w-5 text-primary"
                     />
-                    <span>Activo</span>
+                    <span className="text-foreground">Activo</span>
                   </label>
                   <label className="flex items-center space-x-2">
-                    <span>Fecha de vigencia:</span>
+                    <span className="text-foreground">Fecha de vigencia:</span>
                     <input
                       type="date"
                       value={validUntil || ""}
                       onChange={e => setValidUntil(e.target.value)}
-                      className="cyber-input"
+                      className="px-3 py-2 border border-border rounded-md bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </label>
                 </div>
                 <Select value={platformId} onValueChange={setPlatformId} required>
-                  <SelectTrigger>
+                  <SelectTrigger className="border border-border bg-input text-foreground rounded-md">
                     <SelectValue placeholder="Selecciona una plataforma" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-background text-foreground">
                     {platforms.map(platform => (
-                      <SelectItem key={platform.id} value={platform.id}>
+                      <SelectItem key={platform.id} value={platform.id} className="hover:bg-primary hover:text-background">
                         {platform.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <div>
-                  <p className="font-semibold mb-2">Productos disponibles</p>
-                  <div className="max-h-48 overflow-y-auto border border-primary rounded p-2 space-y-1">
+                  <p className="font-semibold mb-2 text-foreground">Productos disponibles</p>
+                  <div className="max-h-48 overflow-y-auto border border-border rounded p-2 space-y-1 bg-input text-foreground">
                     {filteredProducts.length === 0 && <p className="text-muted-foreground">Selecciona una plataforma para ver productos</p>}
                     {filteredProducts.map(product => (
                       <label key={product.id} className="flex items-center space-x-2 cursor-pointer">
@@ -344,6 +364,7 @@ const PackManagement = () => {
                           type="checkbox"
                           checked={selectedProductIds.has(product.id)}
                           onChange={() => toggleProductSelection(product.id)}
+                          className="form-checkbox h-4 w-4 text-primary"
                         />
                         <div>
                           <p className="font-semibold">{product.title}</p>
@@ -361,13 +382,13 @@ const PackManagement = () => {
                   placeholder="Porcentaje de descuento"
                   value={discountPercentage}
                   onChange={e => setDiscountPercentage(Number(e.target.value))}
-                  className="cyber-input w-full"
+                  className="w-full px-4 py-2 border border-border rounded-md bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <div className="flex justify-end space-x-2">
                   <Button type="button" variant="outline" onClick={() => { setIsDialogOpen(false); setSelectedPack(null); }}>
                     Cancelar
                   </Button>
-                  <Button type="submit">
+                  <Button type="submit" className="bg-primary text-background hover:bg-primary/90">
                     Guardar
                   </Button>
                 </div>
