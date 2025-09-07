@@ -154,7 +154,7 @@ const BundleDetail = () => {
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Precio individual:</span>
+                    <span className="text-muted-foreground">Precio total:</span>
                     <span className="text-muted-foreground">
                       ${bundle.original_total?.toLocaleString('es-AR') || '0'}
                     </span>
