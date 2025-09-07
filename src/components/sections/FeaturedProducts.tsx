@@ -3,13 +3,13 @@ import { CyberButton } from "@/components/ui/cyber-button"
 import ProductCard from "@/components/products/ProductCard"
 import { ArrowRight, Flame, Clock, Package } from "lucide-react"
 import { useFeaturedProducts, usePreorderProducts } from "@/hooks/useProducts"
-import { usePlatforms } from "@/hooks/usePlatforms"
+import { usePlatformsWithBundles } from "@/hooks/usePlatformsWithBundles"
 import { useNavigate } from "react-router-dom"
 
 const FeaturedProducts = () => {
   const { products: featuredProducts, loading: featuredLoading } = useFeaturedProducts()
   const { products: preOrderProducts, loading: preOrderLoading } = usePreorderProducts()
-  const { platforms, loading: platformsLoading } = usePlatforms()
+  const { platforms, loading: platformsLoading } = usePlatformsWithBundles()
   const navigate = useNavigate()
 
   if (featuredLoading || preOrderLoading || platformsLoading) {
