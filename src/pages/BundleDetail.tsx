@@ -16,7 +16,8 @@ const BundleDetail = () => {
   const { addToCart } = useCart()
   const { settings } = useSiteSettings()
 
-  const bundleId = id && !isNaN(Number(id)) ? id : null
+  // Use id string directly without converting to number
+  const bundleId = id || null
   const bundle = bundleId ? bundles.find(b => b.id === bundleId) : null
 
   if (loading) {
