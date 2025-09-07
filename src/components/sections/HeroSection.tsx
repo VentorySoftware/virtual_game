@@ -74,7 +74,7 @@ const HeroSection = () => {
               <Play className="w-5 h-5 mr-2 group-hover:animate-pulse" />
               Explorar Catálogo
             </CyberButton>
-            <CyberButton variant="neon" size="xl">
+            <CyberButton variant="neon" size="xl" onClick={() => navigate("/pre-orders")}>
               Ver Pre-órdenes
             </CyberButton>
           </div>
