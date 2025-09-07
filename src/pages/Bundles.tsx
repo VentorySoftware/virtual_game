@@ -298,9 +298,9 @@ const Bundles = () => {
                           <ShoppingCart className="w-4 h-4 mr-2" />
                           Agregar al carrito
                         </CyberButton>
-                        <CyberButton variant="outline" size="lg" onClick={() => navigate(`/pack/${bundle.id}`)}>
-                          <ArrowRight className="w-4 h-4" />
-                        </CyberButton>
+<CyberButton variant="outline" size="lg" onClick={(e) => { e.stopPropagation(); navigate(`/pack/${bundle.id}`); }}>
+  <ArrowRight className="w-4 h-4 cursor-pointer" />
+</CyberButton>
                       </div>
                     </CardContent>
                   </Card>

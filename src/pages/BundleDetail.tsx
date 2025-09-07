@@ -16,7 +16,7 @@ const BundleDetail = () => {
   const { addToCart } = useCart()
   const { settings } = useSiteSettings()
 
-  const bundleId = id && !isNaN(Number(id)) ? Number(id) : null
+  const bundleId = id && !isNaN(Number(id)) ? id : null
   const bundle = bundleId ? bundles.find(b => b.id === bundleId) : null
 
   if (loading) {
@@ -100,7 +100,11 @@ const BundleDetail = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 {bundle.bundle_items?.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-4 rounded-lg bg-card/50 border border-primary/10">
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between p-4 rounded-lg bg-card/50 border border-primary/10 hover:bg-card/70 cursor-pointer transition-colors"
+                    onClick={() => item.product?.slug && navigate(`/product/${item.product.slug}`)}
+                  >
                     <div className="flex items-center gap-4">
                       <img
                         src={item.product?.image_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=100&h=75&fit=crop'}
