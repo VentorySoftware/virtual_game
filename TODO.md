@@ -1,32 +1,38 @@
-# TODO: Módulo "Pedidos Realizados" en Panel de Administración
+# TODO - Agregar Campo Género al Sistema de Usuarios
 
-## Información Recopilada
-- El módulo existente en `src/pages/admin/Orders.tsx` maneja todos los pedidos, pero se necesita uno específico para pedidos realizados.
-- Se requiere visualizar estado de ventas, detalles de productos, importes, métodos de pago, saldos y estados de pedidos.
-- Mantener interfaz y diseño actual del sistema.
-- Usar AdminLayout y componentes UI existentes.
+## ✅ Completado
+- [x] Crear migración para agregar columna gender a profiles table
+- [x] Actualizar handle_new_user function para incluir gender
+- [x] Actualizar AuthContext signUp para aceptar gender
+- [x] Actualizar Auth.tsx para incluir campo de selección de género
+- [x] Crear archivo de migración SQL
+- [x] Ejecutar migración en base de datos
+- [x] Verificar que la migración se aplicó correctamente
 
-## Plan de Implementación
-- [ ] Crear nuevo archivo `src/pages/admin/OrdersRealizados.tsx`
-- [ ] Filtrar pedidos por estados completados ('paid', 'delivered')
-- [ ] Mostrar tabla con: número pedido, fecha, cliente, estado, total, método pago, saldo
-- [ ] Implementar modal de detalles con productos, importes, método pago, saldos, estados
-- [ ] Añadir filtros por estado, rango fechas, cliente
-- [ ] Funcionalidad de exportación a CSV/Excel
-- [ ] Integrar con AdminLayout y componentes UI
-- [ ] Verificar y extender consulta para obtener método pago y saldos si faltan
-- [ ] Probar filtros, ordenamiento, paginación y modal
-- [ ] Actualizar rutas si es necesario para acceder al nuevo módulo
+## 🔄 Pendiente
+- [ ] Probar registro de usuario con campo género
+- [ ] Actualizar tipos TypeScript si es necesario
+- [ ] Verificar que los datos se guardan correctamente en la base de datos
 
-## Archivos Dependientes
-- `src/pages/admin/OrdersRealizados.tsx` (nuevo)
-- Posiblemente actualizar rutas en `src/App.tsx` o similar
-- Usar hooks existentes: useAuth, useNotifications, etc.
+## 📋 Detalles de Implementación
 
-## Pasos de Seguimiento
-- [ ] Implementar componente base
-- [ ] Añadir funcionalidad de filtros y búsqueda
-- [ ] Implementar modal de detalles
-- [ ] Añadir exportación
-- [ ] Probar y ajustar diseño
-- [ ] Verificar integración con panel admin
+### Base de Datos
+- Nueva tabla: `user_gender` enum con valores: 'Hombre', 'Mujer', 'Otro / No binario', 'Prefiero no decirlo'
+- Columna `gender` agregada a tabla `profiles`
+- Función `handle_new_user` actualizada para incluir gender desde raw_user_meta_data
+
+### Frontend
+- AuthContext: signUp function actualizada para aceptar gender
+- Auth.tsx: Campo de selección agregado al formulario de registro
+- Formulario incluye validación requerida para el campo género
+
+### Próximos Pasos
+1. Ejecutar `supabase link --project-ref TU_PROJECT_REF` para conectar al proyecto
+2. Ejecutar `npx supabase db push` para aplicar la migración
+3. Confirmar que la migración se aplicó sin errores
+4. Probar el flujo completo de registro de usuario
+5. Verificar que los datos se almacenan correctamente
+6. Actualizar cualquier componente que muestre información del perfil si es necesario
+
+## ⚠️ Nota Importante
+La migración no se pudo ejecutar automáticamente porque el proyecto no está vinculado a Supabase. Es necesario ejecutar manualmente los comandos mencionados arriba antes de poder probar el nuevo campo de género.

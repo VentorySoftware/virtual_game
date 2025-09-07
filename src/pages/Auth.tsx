@@ -5,6 +5,7 @@ import { Gamepad2, Eye, EyeOff, Mail, Lock, User } from "lucide-react"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
 
@@ -16,6 +17,7 @@ const Auth = () => {
     password: '',
     firstName: '',
     lastName: '',
+    gender: '',
   })
   const [loading, setLoading] = useState(false)
 
@@ -58,10 +60,11 @@ const Auth = () => {
         }
       } else {
         const { error } = await signUp(
-          formData.email, 
-          formData.password, 
-          formData.firstName, 
-          formData.lastName
+          formData.email,
+          formData.password,
+          formData.firstName,
+          formData.lastName,
+          formData.gender
         )
         if (error) {
           toast({
@@ -84,6 +87,7 @@ const Auth = () => {
             password: '',
             firstName: '',
             lastName: '',
+            gender: '',
           })
         }
       }
@@ -131,40 +135,61 @@ const Auth = () => {
         <div className="cyber-card p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">Nombre</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="firstName"
-                      name="firstName"
-                      type="text"
-                      placeholder="Tu nombre"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      className="pl-10 cyber-border"
-                      required={!isLogin}
-                    />
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">Nombre</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="firstName"
+                        name="firstName"
+                        type="text"
+                        placeholder="Tu nombre"
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        className="pl-10 cyber-border"
+                        required={!isLogin}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Apellido</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="lastName"
+                        name="lastName"
+                        type="text"
+                        placeholder="Tu apellido"
+                        value={formData.lastName}
+                        onChange={handleInputChange}
+                        className="pl-10 cyber-border"
+                        required={!isLogin}
+                      />
+                    </div>
                   </div>
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Apellido</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="lastName"
-                      name="lastName"
-                      type="text"
-                      placeholder="Tu apellido"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      className="pl-10 cyber-border"
-                      required={!isLogin}
-                    />
-                  </div>
+                  <Label htmlFor="gender">Género</Label>
+                  <Select
+                    value={formData.gender}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}
+                    required={!isLogin}
+                  >
+                    <SelectTrigger className="cyber-border">
+                      <SelectValue placeholder="Selecciona tu género" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Hombre">Hombre</SelectItem>
+                      <SelectItem value="Mujer">Mujer</SelectItem>
+                      <SelectItem value="Otro / No binario">Otro / No binario</SelectItem>
+                      <SelectItem value="Prefiero no decirlo">Prefiero no decirlo</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
+              </>
             )}
 
             <div className="space-y-2">
