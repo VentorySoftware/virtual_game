@@ -49,6 +49,44 @@ const Checkout = () => {
     notes: ''
   })
 
+  // Fetch and prefill user profile data
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single()
+
+        if (!error && data) {
+          setFormData(prev => ({
+            ...prev,
+            firstName: data.first_name || user.user_metadata?.first_name || '',
+            lastName: data.last_name || user.user_metadata?.last_name || '',
+            phone: data.phone || '',
+            address: data.address || '',
+            city: data.city || '',
+            postalCode: data.postal_code || ''
+          }))
+        } else {
+          // Fallback to user metadata if profile doesn't exist
+          setFormData(prev => ({
+            ...prev,
+            firstName: user.user_metadata?.first_name || '',
+            lastName: user.user_metadata?.last_name || ''
+          }))
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error)
+      }
+    }
+
+    fetchUserProfile()
+  }, [user])
+
   // Set default payment method when payment methods load
   useEffect(() => {
     if (paymentMethods.length > 0 && !paymentMethod) {
