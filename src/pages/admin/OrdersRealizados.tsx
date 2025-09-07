@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react"
 import { Navigate } from "react-router-dom"
 import { Search, Eye, Package, Filter, FileText, FileSpreadsheet, ArrowUp, ArrowDown } from "lucide-react"
 import AdminLayout from "@/components/admin/AdminLayout"
+import PackProducts from "@/components/admin/PackProducts"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -590,18 +591,20 @@ const OrdersRealizados = () => {
                   <CardContent>
                     <div className="space-y-4">
                       {selectedOrder.order_items.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between p-4 border border-primary/10 rounded-lg bg-card/30">
-                          <div className="flex-1">
+                        <div key={item.id} className="flex flex-col p-4 border border-primary/10 rounded-lg bg-card/30">
+                          <div className="flex justify-between items-center">
                             <h4 className="font-semibold">{item.product_name}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              Cantidad: {item.quantity} × {formatPrice(Number(item.price))}
-                            </p>
-                          </div>
-                          <div className="text-right">
                             <p className="font-bold neon-text">
                               {formatPrice(Number(item.price) * item.quantity)}
                             </p>
                           </div>
+                          <p className="text-sm text-muted-foreground">
+                            Cantidad: {item.quantity} × {formatPrice(Number(item.price))}
+                          </p>
+                          {/* Show pack products if this item is a pack */}
+                          {item.product_id && item.product_id.startsWith('pack_') && (
+                            <PackProducts packId={item.product_id} />
+                          )}
                         </div>
                       ))}
                       <div className="border-t border-primary/20 pt-4">
