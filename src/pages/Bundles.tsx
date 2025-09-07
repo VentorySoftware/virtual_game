@@ -9,13 +9,16 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Package, Star, ShoppingCart, ArrowRight, Gift, Search, Filter } from "lucide-react"
 import { useSiteSettings } from "@/hooks/useSiteSettings"
-import { useLocation } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 import { useMemo, useState, useEffect } from "react"
+import { useCart } from "@/contexts/CartContext"
 
 const Bundles = () => {
   const { platforms } = usePlatforms()
   const { settings } = useSiteSettings()
   const location = useLocation()
+  const navigate = useNavigate()
+  const { addToCart } = useCart()
 
   // State for filters
   const [platformFilter, setPlatformFilter] = useState<string>("all")
@@ -285,11 +288,17 @@ const Bundles = () => {
 
                       {/* Actions */}
                       <div className="flex gap-3">
-                        <CyberButton className="flex-1" size="lg">
+                        <CyberButton className="flex-1" size="lg" onClick={() => addToCart({
+                          bundle_id: bundle.id,
+                          product_name: bundle.name,
+                          price: bundle.bundle_price,
+                          quantity: 1,
+                          type: 'bundle'
+                        })}>
                           <ShoppingCart className="w-4 h-4 mr-2" />
-                          Comprar Pack
+                          Agregar al carrito
                         </CyberButton>
-                        <CyberButton variant="outline" size="lg">
+                        <CyberButton variant="outline" size="lg" onClick={() => navigate(`/pack/${bundle.id}`)}>
                           <ArrowRight className="w-4 h-4" />
                         </CyberButton>
                       </div>

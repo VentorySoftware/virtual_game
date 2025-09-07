@@ -31,6 +31,7 @@ import SettingsAdmin from "./pages/admin/Settings";
 import BusinessHoursAdmin from "./pages/admin/BusinessHours";
 import ReviewsAdmin from "./pages/admin/Reviews";
 import NotFound from "./pages/NotFound";
+import BundleDetail from "./pages/BundleDetail";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ const App = () => (
               <Route path="/product/:slug" element={<ProductDetail />} />
               <Route path="/pre-orders" element={<Preorders />} />
               <Route path="/packs" element={<Bundles />} />
+              <Route path="/pack/:id" element={<BundleDetail />} />
               <Route path="/deals" element={<Deals />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
