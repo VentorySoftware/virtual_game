@@ -57,6 +57,7 @@ const OrderDetail = () => {
   }, [id])
 
   const fetchOrder = async () => {
+    console.log('🔍 Fetching order with ID:', id)
     try {
       setLoading(true)
       const { data, error } = await supabase
@@ -69,11 +70,14 @@ const OrderDetail = () => {
         .eq('id', id)
         .single()
 
+      console.log('📦 Order data received:', data)
+      console.log('❌ Order error:', error)
+      
       if (error) throw error
       setOrder(data)
       setCancellationReason(data.cancellation_reason || '')
     } catch (error) {
-      console.error('Error fetching order:', error)
+      console.error('💥 Error fetching order:', error)
       toast({
         title: "Error",
         description: "No se pudo cargar el pedido",

@@ -291,6 +291,7 @@ const OrdersAdmin = () => {
 
   // Modal functions
   const openOrderDetails = (order: OrderWithRelations) => {
+    console.log('🚀 Navigating to order detail:', order.id)
     navigate(`/admin/orders/${order.id}`)
   }
 
