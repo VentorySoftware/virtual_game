@@ -140,7 +140,17 @@ const PackManagement = () => {
       const { data, error } = await query
 
       if (error) throw error
-      setPacks(data || [])
+      
+      // Transform data to match Pack interface
+      const transformedPacks = (data || []).map(pack => ({
+        ...pack,
+        bundle_items: (pack.bundle_items || []).map((item: any) => ({
+          ...item,
+          product: Array.isArray(item.product) ? item.product[0] : item.product
+        }))
+      }))
+      
+      setPacks(transformedPacks as any)
     } catch (error) {
       notifications.error("Error al cargar los packs")
       console.error(error)

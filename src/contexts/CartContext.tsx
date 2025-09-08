@@ -104,16 +104,21 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
         if (error) throw error
 
-        const cartItems: CartItem[] = data.map(item => ({
-          id: item.id,
-          product_id: item.product_id || undefined,
-          bundle_id: item.bundle_id || undefined,
-          product_name: item.products?.title || item.product_bundles?.name || 'Producto',
-          price: Number(item.price),
-          quantity: item.quantity,
-          image_url: item.products?.image_url || undefined,
-          type: item.product_id ? 'product' : 'bundle'
-        }))
+        const cartItems: CartItem[] = data.map(item => {
+          const products = Array.isArray(item.products) ? item.products[0] : item.products
+          const product_bundles = Array.isArray(item.product_bundles) ? item.product_bundles[0] : item.product_bundles
+          
+          return {
+            id: item.id,
+            product_id: item.product_id || undefined,
+            bundle_id: item.bundle_id || undefined,
+            product_name: products?.title || product_bundles?.name || 'Producto',
+            price: Number(item.price),
+            quantity: item.quantity,
+            image_url: products?.image_url || undefined,
+            type: item.product_id ? 'product' : 'bundle'
+          }
+        })
 
       setItems(cartItems)
     } catch (error) {

@@ -41,12 +41,15 @@ const PackProducts = ({ packId }: PackProductsProps) => {
         if (error) throw error
 
         // Transform the data to match our interface
-        const transformedProducts = (data || []).map(item => ({
-          id: item.id,
-          product_name: item.product?.title || 'Producto desconocido',
-          quantity: item.quantity,
-          price: item.product?.price || 0
-        }))
+        const transformedProducts = (data || []).map(item => {
+          const product = Array.isArray(item.product) ? item.product[0] : item.product
+          return {
+            id: item.id,
+            product_name: product?.title || 'Producto desconocido',
+            quantity: item.quantity,
+            price: product?.price || 0
+          }
+        })
 
         setProducts(transformedProducts)
       } catch (err) {
