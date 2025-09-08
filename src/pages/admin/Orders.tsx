@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react"
-import { Navigate } from "react-router-dom"
+import { Navigate, useNavigate } from "react-router-dom"
 import { Search, Eye, Package, Calendar, Filter, Download, ArrowUpDown, ArrowUp, ArrowDown, FileText, FileSpreadsheet } from "lucide-react"
 import AdminLayout from "@/components/admin/AdminLayout"
 import { CyberButton } from "@/components/ui/cyber-button"
@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/contexts/AuthContext"
@@ -61,6 +60,7 @@ const OrdersAdmin = () => {
   const { categories } = useCategories()
   const { platforms } = usePlatforms()
   const { products } = useProducts()
+  const navigate = useNavigate()
   const { toast } = useToast()
 
   const [users, setUsers] = useState([])
@@ -81,10 +81,6 @@ const OrdersAdmin = () => {
   // Sorting state
   const [sortBy, setSortBy] = useState<'order_number' | 'created_at' | 'total' | 'status'>('created_at')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
-
-  // Modal state
-  const [selectedOrder, setSelectedOrder] = useState<OrderWithRelations | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
 
   // Export state
   const [isExporting, setIsExporting] = useState(false)
@@ -295,13 +291,7 @@ const OrdersAdmin = () => {
 
   // Modal functions
   const openOrderDetails = (order: OrderWithRelations) => {
-    setSelectedOrder(order)
-    setIsModalOpen(true)
-  }
-
-  const closeOrderDetails = () => {
-    setIsModalOpen(false)
-    setSelectedOrder(null)
+    navigate(`/admin/orders/${order.id}`)
   }
 
   // Sorted and paginated orders
@@ -694,124 +684,6 @@ const OrdersAdmin = () => {
           </CardContent>
         </Card>
 
-        {/* Order Details Modal */}
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto cyber-card">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-3">
-                <span>Detalles del Pedido #{selectedOrder?.order_number}</span>
-                {selectedOrder && getStatusBadge(selectedOrder.status)}
-              </DialogTitle>
-              <DialogDescription>
-                Información completa del pedido
-              </DialogDescription>
-            </DialogHeader>
-
-            {selectedOrder && (
-              <div className="space-y-8">
-                {/* Order Summary */}
-                <Card className="cyber-card">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-bold border-b border-primary/30 pb-2 mb-4">
-                      Resumen del Pedido
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <section>
-                        <h4 className="font-semibold text-primary mb-3 flex items-center gap-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 14v7m-4-4h8" />
-                          </svg>
-                          Información del Cliente
-                        </h4>
-                        <div className="space-y-2 text-sm text-muted-foreground">
-                          <p><strong>Email:</strong> {selectedOrder.profiles?.email || selectedOrder.billing_info?.email || 'N/A'}</p>
-                          {selectedOrder.profiles?.first_name && (
-                            <p><strong>Nombre:</strong> {selectedOrder.profiles.first_name} {selectedOrder.profiles.last_name}</p>
-                          )}
-                          <p><strong>Fecha:</strong> {formatDate(selectedOrder.created_at)}</p>
-                        </div>
-                      </section>
-                      <section>
-                        <h4 className="font-semibold text-primary mb-3 flex items-center gap-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m-6-8h6" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 20v-8m0 0l-4 4m4-4l4 4" />
-                          </svg>
-                          Información del Pedido
-                        </h4>
-                        <div className="space-y-2 text-sm text-muted-foreground">
-                          <p><strong>Número:</strong> #{selectedOrder.order_number}</p>
-                          <p><strong>Estado:</strong> {getStatusBadge(selectedOrder.status)}</p>
-                          <p><strong>Total:</strong> {formatPrice(Number(selectedOrder.total))}</p>
-                          <p><strong>Productos:</strong> {selectedOrder.order_items.length}</p>
-                        </div>
-                      </section>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Order Items */}
-                <Card className="cyber-card">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-bold border-b border-primary/30 pb-2 mb-4">
-                      Productos
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      {selectedOrder.order_items.map((item) => (
-                        <div key={item.id} className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border border-primary/20 rounded-lg bg-card/30">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-primary">{item.product_name}</h4>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Cantidad: {item.quantity} × {formatPrice(Number(item.price))}
-                            </p>
-                          </div>
-                          <div className="text-right mt-3 md:mt-0">
-                            <p className="font-bold neon-text text-lg">
-                              {formatPrice(Number(item.price) * item.quantity)}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                      <div className="border-t border-primary/30 pt-4 mt-4">
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold text-primary text-lg">Total del Pedido:</span>
-                          <span className="text-2xl font-extrabold neon-text">
-                            {formatPrice(Number(selectedOrder.total))}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Billing Information */}
-                {selectedOrder.billing_info && (
-                  <Card className="cyber-card">
-                    <CardHeader>
-                      <CardTitle className="text-lg font-bold border-b border-primary/30 pb-2 mb-4">
-                        Información de Facturación
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-muted-foreground">
-                        {Object.entries(selectedOrder.billing_info).map(([key, value]) => (
-                          <div key={key} className="capitalize">
-                            <strong>{key.replace(/_/g, ' ')}:</strong> {String(value) || 'N/A'}
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
       </div>
     </AdminLayout>
   )
