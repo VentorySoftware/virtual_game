@@ -147,7 +147,13 @@ const OrderDetail = () => {
   }
 
   const openWhatsApp = () => {
-    if (!order?.profiles?.phone) {
+    // Check phone in profiles first, then in billing_info as fallback
+    let phone = order?.profiles?.phone
+    if (!phone || phone.trim() === '') {
+      phone = order?.billing_info?.phone
+    }
+    
+    if (!phone || phone.trim() === '') {
       toast({
         title: "Error",
         description: "No hay número de teléfono registrado para este cliente",
@@ -156,9 +162,18 @@ const OrderDetail = () => {
       return
     }
 
-    const phone = order.profiles.phone.replace(/\D/g, '') // Remove non-numeric characters
+    const cleanPhone = phone.replace(/\D/g, '') // Remove non-numeric characters
+    if (cleanPhone.length === 0) {
+      toast({
+        title: "Error",
+        description: "El número de teléfono no es válido",
+        variant: "destructive",
+      })
+      return
+    }
+
     const message = `Hola! Te escribo sobre tu pedido #${order.order_number}. ¿En qué puedo ayudarte?`
-    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`
     
     window.open(whatsappUrl, '_blank')
   }
