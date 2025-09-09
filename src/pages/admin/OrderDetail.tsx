@@ -26,12 +26,13 @@ interface OrderWithRelations {
   delivered_at: string | null
   cancelled_at: string | null
   cancellation_reason: string | null
+  user_id: string
   profiles?: {
     first_name: string | null
     last_name: string | null
     email: string | null
     phone: string | null
-  }
+  } | null
   order_items: Array<{
     id: string
     product_name: string
@@ -60,22 +61,36 @@ const OrderDetail = () => {
     console.log('🔍 Fetching order with ID:', id)
     try {
       setLoading(true)
-      const { data, error } = await supabase
+      
+      // First fetch the order data
+      const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .select(`
           *,
-          profiles!orders_user_id_fkey (first_name, last_name, email, phone),
           order_items (*)
         `)
         .eq('id', id)
         .single()
 
-      console.log('📦 Order data received:', data)
-      console.log('❌ Order error:', error)
+      if (orderError) throw orderError
+
+      // Then fetch the profile data separately
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, email, phone')
+        .eq('user_id', orderData.user_id)
+        .single()
+
+      // Combine the data
+      const combinedData = {
+        ...orderData,
+        profiles: profileError ? null : profileData
+      }
+
+      console.log('📦 Order data received:', combinedData)
       
-      if (error) throw error
-      setOrder(data)
-      setCancellationReason(data.cancellation_reason || '')
+      setOrder(combinedData)
+      setCancellationReason(combinedData.cancellation_reason || '')
     } catch (error) {
       console.error('💥 Error fetching order:', error)
       toast({
