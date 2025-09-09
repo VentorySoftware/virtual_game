@@ -64,7 +64,7 @@ const OrderDetail = () => {
         .from('orders')
         .select(`
           *,
-          profiles:user_id (first_name, last_name, email, phone),
+          profiles!orders_user_id_fkey (first_name, last_name, email, phone),
           order_items (*)
         `)
         .eq('id', id)
