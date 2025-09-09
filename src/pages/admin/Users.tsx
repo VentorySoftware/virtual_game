@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Navigate } from "react-router-dom"
-import { Search, UserCheck, UserX, Crown, Shield, UserPlus, Ban } from "lucide-react"
+import { Search, UserCheck, UserX, Crown, Shield, UserPlus, Ban, Edit } from "lucide-react"
 import AdminLayout from "@/components/admin/AdminLayout"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Input } from "@/components/ui/input"
@@ -36,6 +36,8 @@ const UsersAdmin = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [showCreateUser, setShowCreateUser] = useState(false)
   const [newUser, setNewUser] = useState({ email: '', password: '', firstName: '', lastName: '' })
+  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', phone: '', email: '' })
 
   useEffect(() => {
     if (user) {
@@ -164,6 +166,47 @@ const UsersAdmin = () => {
       console.error('Error creating user:', error)
       notifications.error(`Error al crear usuario: ${error.message}`)
     }
+  }
+
+  const startEditUser = (user: User) => {
+    setEditingUser(user)
+    setEditForm({
+      firstName: user.profiles?.first_name || '',
+      lastName: user.profiles?.last_name || '',
+      phone: user.profiles?.phone || '',
+      email: user.email
+    })
+  }
+
+  const updateUser = async () => {
+    if (!editingUser) return
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          first_name: editForm.firstName,
+          last_name: editForm.lastName,
+          phone: editForm.phone,
+          email: editForm.email
+        })
+        .eq('user_id', editingUser.id)
+
+      if (error) throw error
+
+      setEditingUser(null)
+      setEditForm({ firstName: '', lastName: '', phone: '', email: '' })
+      await fetchUsers()
+      notifications.success('Usuario actualizado exitosamente')
+    } catch (error: any) {
+      console.error('Error updating user:', error)
+      notifications.error(`Error al actualizar usuario: ${error.message}`)
+    }
+  }
+
+  const cancelEdit = () => {
+    setEditingUser(null)
+    setEditForm({ firstName: '', lastName: '', phone: '', email: '' })
   }
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
@@ -298,6 +341,65 @@ const UsersAdmin = () => {
           </Card>
         )}
 
+        {/* Edit User Modal */}
+        {editingUser && (
+          <Card className="cyber-card">
+            <CardHeader>
+              <CardTitle>Editar Usuario</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="editFirstName">Nombre</Label>
+                  <Input
+                    id="editFirstName"
+                    value={editForm.firstName}
+                    onChange={(e) => setEditForm({...editForm, firstName: e.target.value})}
+                    className="cyber-border"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editLastName">Apellido</Label>
+                  <Input
+                    id="editLastName"
+                    value={editForm.lastName}
+                    onChange={(e) => setEditForm({...editForm, lastName: e.target.value})}
+                    className="cyber-border"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="editEmail">Email</Label>
+                <Input
+                  id="editEmail"
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+                  className="cyber-border"
+                />
+              </div>
+              <div>
+                <Label htmlFor="editPhone">Teléfono</Label>
+                <Input
+                  id="editPhone"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
+                  className="cyber-border"
+                  placeholder="Número de teléfono"
+                />
+              </div>
+              <div className="flex gap-2">
+                <CyberButton onClick={updateUser}>
+                  Guardar Cambios
+                </CyberButton>
+                <CyberButton variant="outline" onClick={cancelEdit}>
+                  Cancelar
+                </CyberButton>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Search */}
         <Card className="cyber-card">
           <CardContent className="p-6">
@@ -398,6 +500,16 @@ const UsersAdmin = () => {
 
                     {/* Actions */}
                     <div className="flex flex-col sm:flex-row gap-2">
+                      <CyberButton
+                        variant="outline"
+                        size="sm"
+                        onClick={() => startEditUser(userData)}
+                        className="text-primary border-primary hover:bg-primary/10"
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Editar
+                      </CyberButton>
+                      
                       {isUserAdmin(userData) ? (
                         <CyberButton
                           variant="outline"
