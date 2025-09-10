@@ -23,7 +23,7 @@ interface OrderWithRelations {
   id: string
   order_number: string
   total: number
-  status: 'draft' | 'paid' | 'verifying' | 'delivered' | 'cancelled' | 'pending'
+  status: 'draft' | 'paid' | 'verifying' | 'delivered' | 'cancelled' | 'pending' | 'verified'
   payment_status: string
   created_at: string
   billing_info: any
@@ -43,14 +43,6 @@ interface OrderWithRelations {
       category_id: string | null
       platform_id: string | null
     } | null
-  }>
-  categories: Array<{
-    id: string
-    name: string
-  }>
-  platforms: Array<{
-    id: string
-    name: string
   }>
 }
 
@@ -134,9 +126,7 @@ const OrdersAdmin = () => {
         .select(`
           *,
           profiles(email, first_name, last_name),
-          order_items(id, product_name, quantity, price, product_id, product:products(category_id, platform_id)),
-          categories: order_items!inner.product!inner.categories (id, name),
-          platforms: order_items!inner.product!inner.platforms (id, name)
+          order_items(id, product_name, quantity, price, product_id, product:products(category_id, platform_id))
         `)
         .order('created_at', { ascending: false })
 
@@ -148,7 +138,7 @@ const OrdersAdmin = () => {
     }
   }
 
-  const updateOrderStatus = async (orderId: string, newStatus: 'draft' | 'paid' | 'verifying' | 'delivered' | 'cancelled' | 'pending') => {
+  const updateOrderStatus = async (orderId: string, newStatus: 'draft' | 'paid' | 'verified' | 'verifying' | 'delivered' | 'cancelled' | 'pending') => {
     try {
       const { error } = await supabase
         .from('orders')
@@ -185,6 +175,7 @@ const OrdersAdmin = () => {
     const statusMap = {
       draft: 'Pendiente',
       paid: 'Pagado',
+      verified: 'Verificado',
       verifying: 'Verificando',
       delivered: 'Entregado',
       cancelled: 'Cancelado',
@@ -197,7 +188,8 @@ const OrdersAdmin = () => {
     const statusMap = {
       draft: { label: 'Pendiente', class: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
       paid: { label: 'Pagado', class: 'bg-green-500/20 text-green-400 border-green-500/30' },
-      verifying: { label: 'Verificando', class: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+      verified: { label: 'Verificado', class: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+      verifying: { label: 'Verificando', class: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
       delivered: { label: 'Entregado', class: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' },
       cancelled: { label: 'Cancelado', class: 'bg-red-500/20 text-red-400 border-red-500/30' },
       pending: { label: 'Pendiente de Pago', class: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
@@ -413,13 +405,14 @@ const OrdersAdmin = () => {
                     <SelectValue placeholder="Estado" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos los estados</SelectItem>
-                    <SelectItem value="draft">Pendiente</SelectItem>
-                    <SelectItem value="pending">Pendiente de Pago</SelectItem>
-                    <SelectItem value="paid">Pagado</SelectItem>
-                    <SelectItem value="verifying">Verificando</SelectItem>
-                    <SelectItem value="delivered">Entregado</SelectItem>
-                    <SelectItem value="cancelled">Cancelado</SelectItem>
+                     <SelectItem value="all">Todos los estados</SelectItem>
+                     <SelectItem value="draft">Pendiente</SelectItem>
+                     <SelectItem value="pending">Pendiente de Pago</SelectItem>
+                     <SelectItem value="verified">Verificado</SelectItem>
+                     <SelectItem value="paid">Pagado</SelectItem>
+                     <SelectItem value="verifying">Verificando</SelectItem>
+                     <SelectItem value="delivered">Entregado</SelectItem>
+                     <SelectItem value="cancelled">Cancelado</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={productFilter} onValueChange={setProductFilter}>
@@ -454,11 +447,11 @@ const OrdersAdmin = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas las plataformas</SelectItem>
-                    {platforms.map((platform) => (
-                      <SelectItem key={platform.id} value={platform.name}>
-                        {platform.name}
-                      </SelectItem>
-                    ))}
+                     {platforms.map((platform) => (
+                       <SelectItem key={platform.id} value={platform.id}>
+                         {platform.name}
+                       </SelectItem>
+                     ))}
                   </SelectContent>
                 </Select>
                 <Select value={userFilter} onValueChange={setUserFilter}>
@@ -622,12 +615,13 @@ const OrdersAdmin = () => {
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="draft">Pendiente</SelectItem>
-                                  <SelectItem value="pending">Pendiente de Pago</SelectItem>
-                                  <SelectItem value="paid">Pagado</SelectItem>
-                                  <SelectItem value="verifying">Verificando</SelectItem>
-                                  <SelectItem value="delivered">Entregado</SelectItem>
-                                  <SelectItem value="cancelled">Cancelado</SelectItem>
+                                   <SelectItem value="draft">Pendiente</SelectItem>
+                                   <SelectItem value="pending">Pendiente de Pago</SelectItem>
+                                   <SelectItem value="verified">Verificado</SelectItem>
+                                   <SelectItem value="paid">Pagado</SelectItem>
+                                   <SelectItem value="verifying">Verificando</SelectItem>
+                                   <SelectItem value="delivered">Entregado</SelectItem>
+                                   <SelectItem value="cancelled">Cancelado</SelectItem>
                                 </SelectContent>
                               </Select>
                               <CyberButton
