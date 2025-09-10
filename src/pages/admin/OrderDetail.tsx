@@ -233,8 +233,8 @@ const OrderDetail = () => {
       )
     }
 
-    // Cancel button (always available except for cancelled orders)
-    if (order.status !== 'cancelled') {
+    // Cancel button (available except for cancelled or delivered orders)
+    if (order.status !== 'cancelled' && order.status !== 'delivered') {
       buttons.push(
             <CyberButton
               variant="cyber"
