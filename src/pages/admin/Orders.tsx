@@ -91,6 +91,13 @@ const OrdersAdmin = () => {
     }
   }, [user])
 
+  // Fetch orders when returning to the page
+  useEffect(() => {
+    if (isAdmin) {
+      fetchOrders()
+    }
+  }, [isAdmin])
+
   useEffect(() => {
     const fetchUsers = async () => {
       const { data } = await supabase.from('profiles').select('id, email, first_name, last_name')
