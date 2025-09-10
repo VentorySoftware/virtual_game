@@ -455,9 +455,11 @@ export type Database = {
         Row: {
           admin_notes: string | null
           billing_info: Json
+          cancelled_at: string | null
           coupon_code: string | null
           created_at: string
           customer_notes: string | null
+          delivered_at: string | null
           delivery_evidence: Json | null
           discount_amount: number | null
           id: string
@@ -475,9 +477,11 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           billing_info?: Json
+          cancelled_at?: string | null
           coupon_code?: string | null
           created_at?: string
           customer_notes?: string | null
+          delivered_at?: string | null
           delivery_evidence?: Json | null
           discount_amount?: number | null
           id?: string
@@ -495,9 +499,11 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           billing_info?: Json
+          cancelled_at?: string | null
           coupon_code?: string | null
           created_at?: string
           customer_notes?: string | null
+          delivered_at?: string | null
           delivery_evidence?: Json | null
           discount_amount?: number | null
           id?: string
