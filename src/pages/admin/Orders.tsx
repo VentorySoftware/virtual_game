@@ -125,7 +125,7 @@ const OrdersAdmin = () => {
         .from('orders')
         .select(`
           *,
-          profiles(email, first_name, last_name),
+          profiles!user_id(email, first_name, last_name),
           order_items(id, product_name, quantity, price, product_id, product:products(category_id, platform_id))
         `)
         .order('created_at', { ascending: false })
