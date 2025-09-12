@@ -236,13 +236,25 @@ const OrderDetail = () => {
     // Cancel button (available except for cancelled or delivered orders)
     if (order.status !== 'cancelled' && order.status !== 'delivered') {
       buttons.push(
-            <CyberButton
-              variant="cyber"
-              onClick={() => updateOrderStatus('cancelled')}
-              disabled={updating}
-            >
-              Cancelar
-            </CyberButton>
+        <CyberButton
+          key="cancel"
+          variant="outline"
+          onClick={() => {
+            if (cancellationReason.trim() === '') {
+              toast({
+                title: "Error",
+                description: "Por favor ingresa un motivo de cancelación antes de cancelar el pedido",
+                variant: "destructive",
+              })
+              return
+            }
+            updateOrderStatus('cancelled')
+          }}
+          disabled={updating}
+          className="border-red-500 text-red-500 hover:bg-red-500/20"
+        >
+          Cancelar
+        </CyberButton>
       )
     }
 
@@ -401,7 +413,29 @@ const OrderDetail = () => {
               </CardContent>
             </Card>
 
-            {/* Cancellation Reason */}
+            {/* Cancellation Reason - Show for non-cancelled/non-delivered orders */}
+            {order.status !== 'cancelled' && order.status !== 'delivered' && (
+              <Card className="cyber-card border-orange-500/50">
+                <CardHeader>
+                  <CardTitle className="text-orange-500">Motivo de Cancelación</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Ingresa el motivo antes de cancelar</label>
+                      <Textarea
+                        value={cancellationReason}
+                        onChange={(e) => setCancellationReason(e.target.value)}
+                        placeholder="Ingresa el motivo de la cancelación..."
+                        className="min-h-[100px]"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Cancellation Reason - Show for cancelled orders */}
             {order.status === 'cancelled' && (
               <Card className="cyber-card border-destructive/50">
                 <CardHeader>
