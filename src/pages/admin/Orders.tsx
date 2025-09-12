@@ -125,13 +125,26 @@ const OrdersAdmin = () => {
         .from('orders')
         .select(`
           *,
-          profiles!user_id(email, first_name, last_name),
           order_items(id, product_name, quantity, price, product_id, product:products(category_id, platform_id))
         `)
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setOrders((data || []) as unknown as OrderWithRelations[])
+
+      // Fetch profiles separately and merge
+      const userIds = [...new Set(data?.map(order => order.user_id) || [])]
+      const { data: profilesData } = await supabase
+        .from('profiles')  
+        .select('user_id, email, first_name, last_name')
+        .in('user_id', userIds)
+
+      // Merge profiles with orders
+      const ordersWithProfiles = data?.map(order => ({
+        ...order,
+        profiles: profilesData?.find(profile => profile.user_id === order.user_id) || null
+      })) || []
+
+      setOrders(ordersWithProfiles as unknown as OrderWithRelations[])
     } catch (error) {
       console.error('Error fetching orders:', error)
       notifications.error('Error al cargar los pedidos: ' + error.message)
