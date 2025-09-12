@@ -25,7 +25,6 @@ interface OrderWithRelations {
   admin_notes: string | null
   delivered_at: string | null
   cancelled_at: string | null
-  cancellation_reason: string | null
   user_id: string
   profiles?: {
     first_name: string | null
@@ -90,7 +89,13 @@ const OrderDetail = () => {
       console.log('📦 Order data received:', combinedData)
       
       setOrder(combinedData)
-      setCancellationReason(combinedData.cancellation_reason || '')
+      // Extract cancellation reason from admin_notes if it exists
+      if (combinedData.admin_notes && combinedData.admin_notes.includes('Motivo de cancelación:')) {
+        const reason = combinedData.admin_notes.replace('Motivo de cancelación: ', '')
+        setCancellationReason(reason)
+      } else {
+        setCancellationReason('')
+      }
     } catch (error) {
       console.error('💥 Error fetching order:', error)
       toast({
@@ -118,7 +123,10 @@ const OrderDetail = () => {
         updateData.delivered_at = new Date().toISOString()
       } else if (newStatus === 'cancelled') {
         updateData.cancelled_at = new Date().toISOString()
-        updateData.cancellation_reason = cancellationReason
+        // Store cancellation reason in admin_notes if provided
+        if (cancellationReason.trim() !== '') {
+          updateData.admin_notes = `Motivo de cancelación: ${cancellationReason}`
+        }
       }
 
       const { error } = await supabase
