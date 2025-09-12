@@ -239,21 +239,11 @@ const OrderDetail = () => {
         <CyberButton
           key="cancel"
           variant="outline"
-          onClick={() => {
-            if (cancellationReason.trim() === '') {
-              toast({
-                title: "Error",
-                description: "Por favor ingresa un motivo de cancelación antes de cancelar el pedido",
-                variant: "destructive",
-              })
-              return
-            }
-            updateOrderStatus('cancelled')
-          }}
+          onClick={() => updateOrderStatus('cancelled')}
           disabled={updating}
           className="border-red-500 text-red-500 hover:bg-red-500/20"
         >
-          Cancelar
+          Desestimar
         </CyberButton>
       )
     }
