@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from "react"
 import { Navigate, useNavigate } from "react-router-dom"
-import { Search, Eye, Package, Calendar, Filter, Download, ArrowUpDown, ArrowUp, ArrowDown, FileSpreadsheet } from "lucide-react"
+import { Search, Eye, Package, Calendar, Filter, Download, ArrowUpDown, ArrowUp, ArrowDown, FileSpreadsheet, FileText } from "lucide-react"
 import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+import 'jspdf-autotable'
 import AdminLayout from "@/components/admin/AdminLayout"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Input } from "@/components/ui/input"
@@ -246,7 +248,63 @@ const OrdersAdmin = () => {
     setCurrentPage(1) // Reset to first page when sorting
   }
 
-  // Export function
+  // Export functions
+  const exportToPDF = () => {
+    setIsExporting(true)
+    try {
+      const doc = new jsPDF()
+      
+      // Add title
+      doc.setFontSize(20)
+      doc.text('Gestión de Pedidos', 20, 20)
+      
+      // Add date
+      doc.setFontSize(12)
+      doc.text(`Fecha de exportación: ${new Date().toLocaleDateString('es-AR')}`, 20, 30)
+      
+      // Prepare data for table
+      const tableData = filteredOrders.map(order => [
+        order.order_number,
+        formatDate(order.created_at),
+        order.profiles?.email || order.billing_info?.email || 'N/A',
+        getStatusLabel(order.status),
+        `$${Number(order.total).toLocaleString()}`,
+        order.order_items.map(item => `${item.product_name} (x${item.quantity})`).join('; ')
+      ])
+
+      // Add table
+      const autoTable = require('jspdf-autotable')
+      autoTable(doc, {
+        head: [['Número', 'Fecha', 'Cliente', 'Estado', 'Total', 'Productos']],
+        body: tableData,
+        startY: 40,
+        styles: {
+          fontSize: 8,
+          cellPadding: 2
+        },
+        headStyles: {
+          fillColor: [255, 0, 110],
+          textColor: 255
+        }
+      })
+
+      doc.save(`pedidos_${new Date().toISOString().split('T')[0]}.pdf`)
+
+      toast({
+        title: "Exportación exitosa",
+        description: "Los datos se han exportado a PDF correctamente.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error en exportación",
+        description: "Hubo un error al exportar los datos.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   const exportToExcel = () => {
     setIsExporting(true)
     try {
@@ -383,12 +441,12 @@ const OrdersAdmin = () => {
                 </div>
                 <Button
                   variant="outline"
-                  onClick={exportToExcel}
+                  onClick={exportToPDF}
                   disabled={isExporting}
                   className="cyber-border"
                 >
-                  <FileSpreadsheet className="h-4 w-4 mr-2" />
-                  {isExporting ? 'Exportando...' : 'Exportar a Excel'}
+                  <FileText className="h-4 w-4 mr-2" />
+                  {isExporting ? 'Exportando...' : 'Exportar a PDF'}
                 </Button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
