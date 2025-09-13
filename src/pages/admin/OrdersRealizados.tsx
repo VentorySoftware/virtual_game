@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { Navigate, useNavigate } from "react-router-dom"
-import { Search, Eye, Package, Filter, FileText, FileSpreadsheet, ArrowUp, ArrowDown } from "lucide-react"
+import { Search, Eye, Package, Filter, FileSpreadsheet, ArrowUp, ArrowDown } from "lucide-react"
+import * as XLSX from 'xlsx'
 import AdminLayout from "@/components/admin/AdminLayout"
 import PackProducts from "@/components/admin/PackProducts"
 import { CyberButton } from "@/components/ui/cyber-button"
@@ -168,34 +169,41 @@ const OrdersRealizados = () => {
     setCurrentPage(1) // Reset to first page when sorting
   }
 
-  // Export functions
-  const exportToCSV = () => {
+  // Export function
+  const exportToExcel = () => {
     setIsExporting(true)
     try {
-      const headers = ['Número de Pedido', 'Fecha', 'Cliente', 'Estado', 'Total', 'Método de Pago', 'Saldo']
-      const csvData = filteredOrders.map(order => [
-        order.order_number,
-        formatDate(order.created_at),
-        order.profiles?.email || order.billing_info?.email || 'N/A',
-        order.status,
-        formatPrice(Number(order.total)),
-        order.payment_method || 'N/A',
-        order.balance !== null ? formatPrice(order.balance) : 'N/A'
-      ])
+      const excelData = filteredOrders.map(order => ({
+        'Número de Pedido': order.order_number,
+        'Fecha': formatDate(order.created_at),
+        'Cliente': order.profiles?.email || order.billing_info?.email || 'N/A',
+        'Estado': order.status,
+        'Total': Number(order.total),
+        'Método de Pago': order.payment_method || 'N/A',
+        'Saldo': order.balance !== null ? order.balance : 'N/A'
+      }))
 
-      const csvContent = [headers, ...csvData]
-        .map(row => row.map(cell => `"${cell}"`).join(','))
-        .join('\n')
+      const worksheet = XLSX.utils.json_to_sheet(excelData)
+      const workbook = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Pedidos Realizados')
+      
+      // Auto-adjust column widths
+      const colWidths = [
+        { wch: 20 }, // Número de Pedido
+        { wch: 20 }, // Fecha
+        { wch: 30 }, // Cliente
+        { wch: 15 }, // Estado
+        { wch: 15 }, // Total
+        { wch: 20 }, // Método de Pago
+        { wch: 15 }  // Saldo
+      ]
+      worksheet['!cols'] = colWidths
 
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-      const link = document.createElement('a')
-      link.href = URL.createObjectURL(blob)
-      link.download = `pedidos_realizados_${new Date().toISOString().split('T')[0]}.csv`
-      link.click()
+      XLSX.writeFile(workbook, `pedidos_realizados_${new Date().toISOString().split('T')[0]}.xlsx`)
 
       toast({
         title: "Exportación exitosa",
-        description: "Los datos se han exportado a CSV correctamente.",
+        description: "Los datos se han exportado a Excel correctamente.",
       })
     } catch (error) {
       toast({
@@ -297,26 +305,15 @@ const OrdersRealizados = () => {
                     className="pl-10 cyber-border"
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={exportToCSV}
-                    disabled={isExporting}
-                    className="cyber-border"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    {isExporting ? 'Exportando...' : 'Exportar CSV'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={exportToCSV}
-                    disabled={isExporting}
-                    className="cyber-border"
-                  >
-                    <FileSpreadsheet className="h-4 w-4 mr-2" />
-                    {isExporting ? 'Exportando...' : 'Exportar Excel'}
-                  </Button>
-                </div>
+                <Button
+                  variant="outline"
+                  onClick={exportToExcel}
+                  disabled={isExporting}
+                  className="cyber-border"
+                >
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  {isExporting ? 'Exportando...' : 'Exportar a Excel'}
+                </Button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
