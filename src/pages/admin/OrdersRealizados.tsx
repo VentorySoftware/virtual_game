@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { Navigate, useNavigate } from "react-router-dom"
-import { Search, Eye, Package, Filter, FileText, ArrowUp, ArrowDown } from "lucide-react"
+import { Search, Eye, Package, Filter, FileText, FileSpreadsheet, ArrowUp, ArrowDown } from "lucide-react"
+import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
 import AdminLayout from "@/components/admin/AdminLayout"
@@ -170,7 +171,7 @@ const OrdersRealizados = () => {
     setCurrentPage(1) // Reset to first page when sorting
   }
 
-  // Export function
+  // Export functions
   const exportToPDF = () => {
     setIsExporting(true)
     try {
@@ -216,6 +217,52 @@ const OrdersRealizados = () => {
       toast({
         title: "Exportación exitosa",
         description: "Los datos se han exportado a PDF correctamente.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error en exportación",
+        description: "Hubo un error al exportar los datos.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const exportToExcel = () => {
+    setIsExporting(true)
+    try {
+      const excelData = filteredOrders.map(order => ({
+        'Número de Pedido': order.order_number,
+        'Fecha': formatDate(order.created_at),
+        'Cliente': order.profiles?.email || order.billing_info?.email || 'N/A',
+        'Estado': order.status,
+        'Total': Number(order.total),
+        'Método de Pago': order.payment_method || 'N/A',
+        'Saldo': order.balance !== null ? order.balance : 'N/A'
+      }))
+
+      const worksheet = XLSX.utils.json_to_sheet(excelData)
+      const workbook = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Pedidos Realizados')
+      
+      // Auto-adjust column widths
+      const colWidths = [
+        { wch: 20 }, // Número de Pedido
+        { wch: 20 }, // Fecha
+        { wch: 30 }, // Cliente
+        { wch: 15 }, // Estado
+        { wch: 15 }, // Total
+        { wch: 20 }, // Método de Pago
+        { wch: 15 }  // Saldo
+      ]
+      worksheet['!cols'] = colWidths
+
+      XLSX.writeFile(workbook, `pedidos_realizados_${new Date().toISOString().split('T')[0]}.xlsx`)
+
+      toast({
+        title: "Exportación exitosa",
+        description: "Los datos se han exportado a Excel correctamente.",
       })
     } catch (error) {
       toast({
@@ -317,15 +364,26 @@ const OrdersRealizados = () => {
                     className="pl-10 cyber-border"
                   />
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={exportToPDF}
-                  disabled={isExporting}
-                  className="cyber-border"
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  {isExporting ? 'Exportando...' : 'Exportar a PDF'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={exportToPDF}
+                    disabled={isExporting}
+                    className="cyber-border"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    {isExporting ? 'Exportando...' : 'Exportar a PDF'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={exportToExcel}
+                    disabled={isExporting}
+                    className="cyber-border"
+                  >
+                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    {isExporting ? 'Exportando...' : 'Exportar a Excel'}
+                  </Button>
+                </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
