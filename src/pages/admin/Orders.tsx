@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { Navigate, useNavigate } from "react-router-dom"
-import { Search, Eye, Package, Calendar, Filter, Download, ArrowUpDown, ArrowUp, ArrowDown, FileText, FileSpreadsheet } from "lucide-react"
+import { Search, Eye, Package, Calendar, Filter, Download, ArrowUpDown, ArrowUp, ArrowDown, FileSpreadsheet } from "lucide-react"
+import * as XLSX from 'xlsx'
 import AdminLayout from "@/components/admin/AdminLayout"
 import { CyberButton } from "@/components/ui/cyber-button"
 import { Input } from "@/components/ui/input"
@@ -245,51 +246,41 @@ const OrdersAdmin = () => {
     setCurrentPage(1) // Reset to first page when sorting
   }
 
-  // Export functions
-  const exportToCSV = () => {
-    setIsExporting(true)
-    try {
-      const headers = ['Número de Pedido', 'Fecha', 'Cliente', 'Estado', 'Total', 'Productos']
-      const csvData = filteredOrders.map(order => [
-        order.order_number,
-        formatDate(order.created_at),
-        order.profiles?.email || order.billing_info?.email || 'N/A',
-        getStatusLabel(order.status),
-        formatPrice(Number(order.total)),
-        order.order_items.map(item => `${item.product_name} (x${item.quantity})`).join('; ')
-      ])
-
-      const csvContent = [headers, ...csvData]
-        .map(row => row.map(cell => `"${cell}"`).join(','))
-        .join('\n')
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-      const link = document.createElement('a')
-      link.href = URL.createObjectURL(blob)
-      link.download = `pedidos_${new Date().toISOString().split('T')[0]}.csv`
-      link.click()
-
-      toast({
-        title: "Exportación exitosa",
-        description: "Los datos se han exportado a CSV correctamente.",
-      })
-    } catch (error) {
-      toast({
-        title: "Error en exportación",
-        description: "Hubo un error al exportar los datos.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsExporting(false)
-    }
-  }
-
+  // Export function
   const exportToExcel = () => {
     setIsExporting(true)
     try {
-      // For Excel export, we'll use CSV format as well since it's simpler
-      // In a real application, you might want to use a library like xlsx
-      exportToCSV()
+      const headers = ['Número de Pedido', 'Fecha', 'Cliente', 'Estado', 'Total', 'Productos']
+      const excelData = filteredOrders.map(order => ({
+        'Número de Pedido': order.order_number,
+        'Fecha': formatDate(order.created_at),
+        'Cliente': order.profiles?.email || order.billing_info?.email || 'N/A',
+        'Estado': getStatusLabel(order.status),
+        'Total': Number(order.total),
+        'Productos': order.order_items.map(item => `${item.product_name} (x${item.quantity})`).join('; ')
+      }))
+
+      const worksheet = XLSX.utils.json_to_sheet(excelData)
+      const workbook = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Pedidos')
+      
+      // Auto-adjust column widths
+      const colWidths = [
+        { wch: 20 }, // Número de Pedido
+        { wch: 20 }, // Fecha
+        { wch: 30 }, // Cliente
+        { wch: 15 }, // Estado
+        { wch: 15 }, // Total
+        { wch: 50 }  // Productos
+      ]
+      worksheet['!cols'] = colWidths
+
+      XLSX.writeFile(workbook, `pedidos_${new Date().toISOString().split('T')[0]}.xlsx`)
+
+      toast({
+        title: "Exportación exitosa",
+        description: "Los datos se han exportado a Excel correctamente.",
+      })
     } catch (error) {
       toast({
         title: "Error en exportación",
@@ -390,26 +381,15 @@ const OrdersAdmin = () => {
                     className="pl-10 cyber-border"
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={exportToCSV}
-                    disabled={isExporting}
-                    className="cyber-border"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    {isExporting ? 'Exportando...' : 'CSV'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={exportToExcel}
-                    disabled={isExporting}
-                    className="cyber-border"
-                  >
-                    <FileSpreadsheet className="h-4 w-4 mr-2" />
-                    {isExporting ? 'Exportando...' : 'Excel'}
-                  </Button>
-                </div>
+                <Button
+                  variant="outline"
+                  onClick={exportToExcel}
+                  disabled={isExporting}
+                  className="cyber-border"
+                >
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  {isExporting ? 'Exportando...' : 'Exportar a Excel'}
+                </Button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
