@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react"
 import { Navigate, useNavigate } from "react-router-dom"
-import { Search, Eye, Package, Filter, FileSpreadsheet, ArrowUp, ArrowDown } from "lucide-react"
-import * as XLSX from 'xlsx'
+import { Search, Eye, Package, Filter, FileText, ArrowUp, ArrowDown } from "lucide-react"
+import jsPDF from 'jspdf'
+import 'jspdf-autotable'
 import AdminLayout from "@/components/admin/AdminLayout"
 import PackProducts from "@/components/admin/PackProducts"
 import { CyberButton } from "@/components/ui/cyber-button"
@@ -170,40 +171,51 @@ const OrdersRealizados = () => {
   }
 
   // Export function
-  const exportToExcel = () => {
+  const exportToPDF = () => {
     setIsExporting(true)
     try {
-      const excelData = filteredOrders.map(order => ({
-        'Número de Pedido': order.order_number,
-        'Fecha': formatDate(order.created_at),
-        'Cliente': order.profiles?.email || order.billing_info?.email || 'N/A',
-        'Estado': order.status,
-        'Total': Number(order.total),
-        'Método de Pago': order.payment_method || 'N/A',
-        'Saldo': order.balance !== null ? order.balance : 'N/A'
-      }))
-
-      const worksheet = XLSX.utils.json_to_sheet(excelData)
-      const workbook = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Pedidos Realizados')
+      const doc = new jsPDF()
       
-      // Auto-adjust column widths
-      const colWidths = [
-        { wch: 20 }, // Número de Pedido
-        { wch: 20 }, // Fecha
-        { wch: 30 }, // Cliente
-        { wch: 15 }, // Estado
-        { wch: 15 }, // Total
-        { wch: 20 }, // Método de Pago
-        { wch: 15 }  // Saldo
-      ]
-      worksheet['!cols'] = colWidths
+      // Add title
+      doc.setFontSize(20)
+      doc.text('Pedidos Realizados', 20, 20)
+      
+      // Add date
+      doc.setFontSize(12)
+      doc.text(`Fecha de exportación: ${new Date().toLocaleDateString('es-AR')}`, 20, 30)
+      
+      // Prepare data for table
+      const tableData = filteredOrders.map(order => [
+        order.order_number,
+        formatDate(order.created_at),
+        order.profiles?.email || order.billing_info?.email || 'N/A',
+        order.status,
+        `$${Number(order.total).toLocaleString()}`,
+        order.payment_method || 'N/A',
+        order.balance !== null ? `$${order.balance.toLocaleString()}` : 'N/A'
+      ])
 
-      XLSX.writeFile(workbook, `pedidos_realizados_${new Date().toISOString().split('T')[0]}.xlsx`)
+      // Add table using autoTable
+      const autoTable = require('jspdf-autotable')
+      autoTable(doc, {
+        head: [['Número', 'Fecha', 'Cliente', 'Estado', 'Total', 'Método Pago', 'Saldo']],
+        body: tableData,
+        startY: 40,
+        styles: {
+          fontSize: 8,
+          cellPadding: 2
+        },
+        headStyles: {
+          fillColor: [255, 0, 110],
+          textColor: 255
+        }
+      })
+
+      doc.save(`pedidos_realizados_${new Date().toISOString().split('T')[0]}.pdf`)
 
       toast({
         title: "Exportación exitosa",
-        description: "Los datos se han exportado a Excel correctamente.",
+        description: "Los datos se han exportado a PDF correctamente.",
       })
     } catch (error) {
       toast({
@@ -307,12 +319,12 @@ const OrdersRealizados = () => {
                 </div>
                 <Button
                   variant="outline"
-                  onClick={exportToExcel}
+                  onClick={exportToPDF}
                   disabled={isExporting}
                   className="cyber-border"
                 >
-                  <FileSpreadsheet className="h-4 w-4 mr-2" />
-                  {isExporting ? 'Exportando...' : 'Exportar a Excel'}
+                  <FileText className="h-4 w-4 mr-2" />
+                  {isExporting ? 'Exportando...' : 'Exportar a PDF'}
                 </Button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
